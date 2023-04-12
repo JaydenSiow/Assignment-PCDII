@@ -62,7 +62,7 @@ void displayAllStaff(Staff staff[], int);          //used in search, modify and 
 //Function used to prompt data input
 char* getStaffID(Staff* staff);
 char* getStaffName(Staff* staff);
-char* getStaffName(Staff* staff);
+void getStaffBirth(Staff* staff, int* day, int* month, int* year);
 char getStaffGender(Staff staff);
 char getStaffPosition(Staff staff);
 char* getStaffPassword(Staff* staff);
@@ -73,7 +73,7 @@ void StaffMenu();
 
 //Main function
 void main() {
-    StaffLogin();
+    //StaffLogin();
     StaffMenu();
 }
 
@@ -115,7 +115,6 @@ void StaffMenu() {
             StaffDelete();
             break;
         case 6:
-            system("cls");
             StaffLogin();
             break;
         case 7:
@@ -165,12 +164,20 @@ int checkStaffName(char name[]) {
 }
 
 int checkBirthDate(int day, int month, int year) {
-    if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900) {
-        printf("Invalid date, try again\n");
+    if (day < 1 || day > 31) {
+        printf("Invalid day, try again\n");
+        return 1;
+    }
+    else if (month < 1 || month > 12) {
+        printf("Invalid month, try again\n");
         return 1;
     }
     else if (year > 2005 && year <= 2023) {
         printf("Too young to be a staff, try again\n");
+        return 1;
+    }
+    else if (year < 1900 || year > 2023) {
+        printf("Invalid year, try again\n");
         return 1;
     }
     else
@@ -240,8 +247,10 @@ int checkNumber(char input[]) {
 int checkDecision(char yesNo) {
     if (yesNo == 'Y' || yesNo == 'N')
         return 0;
-    else if (yesNo == 'E')
+    else if (yesNo == 'E') {
+        printf("\nProgram exited successfully!!!\n");
         exit(-1);
+    }
     else {
         printf("Invalid operation!!! Please re-enter a valid character\n\n");
         return 1;
@@ -339,9 +348,23 @@ char* getStaffName(Staff* staff) {
     return staff->name;
 }
 
-void getStaffBirth(Staff* staff, int *day, int *month, int *year) {
-    printf("\nEnter birth date (DD/MM/YYYY): ");
-    scanf("%d/%d/%d", &((*staff).birthDate.day), &((*staff).birthDate.month), &((*staff).birthDate.year));
+void getStaffBirth(Staff* staff, int* day, int* month, int* year) {
+    char input[12];
+    int validFormat = 0;
+
+    do {
+        printf("\nEnter birth date (DD/MM/YYYY): ");
+        scanf(" %s", input);
+
+        if (sscanf(input, "%2d/%2d/%4d", day, month, year) == 3)
+            validFormat = 1;
+        else
+            printf("Invalid format! Please re-enter date in the format DD/MM/YYYY\n");
+    } while (validFormat == 0);
+
+    staff->birthDate.day = *day;
+    staff->birthDate.month = *month;
+    staff->birthDate.year = *year;
 }
 
 char getStaffGender(Staff staff) {
@@ -391,8 +414,9 @@ void StaffAdd() {
     int validation, duplicateID;
 
     do {
+        system("cls");
         do {
-            printf("\nEnter staff ID of new staff(Eg: AB123, E = Exit to Staff Menu): ");
+            printf("\nEnter staff ID of new staff (Eg: AB123, E = Exit to Staff Menu): ");
             getStaffID(&staff);
             checkStaffID(staff.staffID, &validation, &staff.staffID);
             duplicateID = checkStaffIDExist(staff.staffID);
@@ -460,6 +484,7 @@ void StaffSearch() {
     char input[10], continueSearch;
 
     do {
+        system("cls");
         printf("\nSearch by:\n");
         printf("1. Staff ID\n");
         printf("2. Name\n");
@@ -474,16 +499,20 @@ void StaffSearch() {
             scanf(" %s", input);
 
             choice = checkNumber(input);
-            searchByAttr(choice);
 
-            do {
-                continueSearch = getDecision();
-                continueSearch = toupper(continueSearch);
-                validation = checkDecision(continueSearch);
-            } while (validation);
-
-        } while (validation);
-    } while (choice < 1 || choice > 6 || continueSearch == 'Y');
+            if (choice < 1 || choice > 6) {
+                printf("Invalid input. Please try again.\n\n");
+            }
+            else {
+                searchByAttr(choice);
+                do {
+                    continueSearch = getDecision();
+                    continueSearch = toupper(continueSearch);
+                    validation = checkDecision(continueSearch);
+                } while (validation);
+            }
+        } while (choice < 1 || choice > 6);
+    } while (continueSearch == 'Y');
 }
 
 void searchByAttr(int choice){
@@ -630,6 +659,7 @@ void StaffModify() {
     readStaffFile(staff, &staffCount);
 
     do {
+        system("cls");
         do {
             printf("\nEnter staff ID to modify (Eg: AB123, E = Exit to Staff Menu): ");
             getStaffID(&modifyAttr);
@@ -772,6 +802,7 @@ void StaffDelete() {
     readStaffFile(staff, &staffCount);
 
     do {
+        system("cls");
         do {
             printf("\nEnter Staff ID to delete the staff information (Eg: AB123, E = Exit to Staff Menu): ");
             getStaffID(&staffToDelete);
@@ -818,57 +849,63 @@ void StaffDelete() {
 void StaffLogin() {
     Staff login;
     Staff staff[MAX_STAFF];
-    int staffCount, existence, validation, loginSuccess = 0;
+    int staffCount, existence, validation, loginSuccess = 1, changeID = 0;
     readStaffFile(staff, &staffCount);
 
-    printf("MLM Company Staff Login Portal\n");
-
     do {
-        printf("\nEnter Staff ID (Eg: AB123): ");
-        getStaffID(&login);
-        checkStaffID(login.staffID, &validation, &login.staffID);
-        existence = checkStaffIDExist(login.staffID);   
-        if (existence == 0 && validation == 0)
-            printf("Staff with Staff ID %s does not exist\n", login.staffID);
-    } while (existence == 0 || validation);
+        system("cls");
+        printf("MLM Company Staff Login Portal\n");
 
-    do {
-        printf("\nEnter password (Input -1 to login by password recovery): ");
-        rewind(stdin);
-        scanf(" %[^\n]", login.password);
+        do {
+            printf("\nEnter Staff ID (Eg: AB123): ");
+            getStaffID(&login);
+            checkStaffID(login.staffID, &validation, &login.staffID);
+            existence = checkStaffIDExist(login.staffID);
+            if (existence == 0 && validation == 0)
+                printf("Staff with Staff ID %s does not exist\n", login.staffID);
+        } while (existence == 0 || validation);
 
-        if (strcmp(login.password, "-1") != 0) {
-            for (int i = 0; i < staffCount; i++) {
-                if (strcmp(login.password, staff[i].password) == 0) {
-                    printf("\nLogin successfully!!!\n");
-                    loginSuccess = 0;
-                    break;
+        do {
+            printf("\nEnter password (Input -1 to login by password recovery, input -2 to change Staff ID): ");
+            rewind(stdin);
+            scanf(" %[^\n]", login.password);
+
+            if (strcmp(login.password, "-2") == 0) {
+                changeID = 1;
+                loginSuccess = 0;
+                system("cls");
+            }
+            else if (strcmp(login.password, "-1") != 0) {
+                for (int i = 0; i < staffCount; i++) {
+                    if (strcmp(login.password, staff[i].password) == 0) {
+                        printf("\nLogin successfully!!!\n");
+                        loginSuccess = 0;
+                        changeID = 0;
+                        break;
+                    }
+                    else
+                        loginSuccess = 1;
                 }
-                else
-                    loginSuccess = 1;
+                if (loginSuccess == 1)
+                    printf("Invalid password! Please try again\n");
             }
-            if (loginSuccess == 1) {
-                printf("Invalid password! Please try again\n");
-            }
-        }
-        else {
-            do {
-                printf("\nEnter password recovery (Input -1 to login by password): ");
+            else {
+                printf("\nEnter password recovery: ");
                 rewind(stdin);
                 scanf(" %[^\n]", login.recovery);
                 for (int i = 0; i < staffCount; i++) {
                     if (strcmp(login.recovery, staff[i].recovery) == 0) {
                         printf("\nLogin successfully!!!\n");
                         loginSuccess = 0;
+                        changeID = 0;
                         break;
                     }
                     else
                         loginSuccess = 1;
                 }
-                if (loginSuccess == 1) {
+                if (loginSuccess == 1)
                     printf("Invalid password recovery! Please try again\n");
-                }
-            } while (strcmp(login.recovery, "-1") != 0);
-        }
-    } while (loginSuccess == 1);
+            }
+        } while (loginSuccess);
+    } while (changeID);
 }
