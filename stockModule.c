@@ -108,9 +108,10 @@ void updateStockStatus(Stock* stock, int* nStock, Stock* archivedStock, int* nAr
 void stockReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock);
 void overviewReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock);
 void lowStockReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock);
-void trackDateReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock);
+void dateRangeReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock);
 
 /* ------------------------------ Definition ------------------------------ */
+
 /* -------------------- Main -------------------- */
 void main() {
 	Stock stock[MAX_STOCK], archivedStock[MAX_ARCHIVED_STOCK];
@@ -118,8 +119,6 @@ void main() {
 	char opt[100];
 
 	readStockFile(stock, &size, archivedStock, &arcSize);
-
-	//printf("%s\n\n", archivedStock[arcSize -1].prodID);
 
 	do {
 		stockMenu();
@@ -153,18 +152,31 @@ void main() {
 }
 
 void stockMenu() {
+	//printf(
+	//	"+=========================================+\n"
+	//	"| %-40s|\n"
+	//	"+===+=====================================+\n"
+	//	"| 1 | %-36s|\n"
+	//	"| 2 | %-36s|\n"
+	//	"| 3 | %-36s|\n"
+	//	"| 4 | %-36s|\n"
+	//	"| 5 | %-36s|\n"
+	//	"| 6 | %-36s|\n"
+	//	"| 7 | %-36s|\n"
+	//	"+===+=====================================+\n", "Stock Information Module", "Add New Stock", "Search Active Stock", "Modify Active Stock", "Display Stock","Update Stock Status","Stock Report", "BACK"
+	//);
 	printf(
-		"+============================+\n"
-		"| Stock Information Module   |\n"
-		"+===+========================+\n"
-		"| 1 | Add New Stock          |\n"
-		"| 2 | Search Active Stock    |\n"
-		"| 3 | Modify Active Stock    |\n"
-		"| 4 | Display Active Stock   |\n"
-		"| 5 | Update Stock Status    |\n"
-		"| 6 | Stock Report           |\n"
-		"| 7 | BACK                   |\n"
-		"+===+========================+\n"
+		"+=================================+\n"
+		" STOCK INFORMATION MODULE\n"
+		"+=================================+\n"
+		"[1] ADD NEW STOCK\n"
+		"[2] SEARCH ACTIVE STOCK\n"
+		"[3] MODIFY ACTIVE STOCK\n"
+		"[4] DISPLAY STOCK\n"
+		"[5] UPDATE STOCK STATUS\n"
+		"[6] GENERATE STOCK REPORT\n"
+		"[7] BACK\n"
+		"+=================================+\n"
 	);
 }
 
@@ -208,33 +220,33 @@ void errorMsg(char reason[]) {
 	printf("Invalid Input! Please Enter Again! [%s]\n\n", reason);
 }
 int getYesNo(char question[]) {
-	char yesNo[100];
-	char check;
+	char yesNo[50];
+	char checkedYN;
 
 	do {
 		printf("%s", question);
 		rewind(stdin);
 		gets(yesNo);
-		check = yesNoValidation(yesNo);
-		switch (check) {
+		checkedYN = yesNoValidation(yesNo);
+		switch (checkedYN) {
 		case 'Y':
 			return 1;
 		case 'N':
 			return 0;
 		}
-	} while (check == 'X');
+	} while (checkedYN == 'X');
 }
 int inputOpt(char *opt, int minOpt, int maxOpt) {
-	int check = -1;
+	int checkedOpt = -1;
 
 	do {
 		printf(" > ");
 		rewind(stdin);
 		gets(opt);
 
-		check = optValidation(opt, minOpt, maxOpt);
-	} while (check == -1);
-	return check;
+		checkedOpt = optValidation(opt, minOpt, maxOpt);
+	} while (checkedOpt == -1);
+	return checkedOpt;
 }
 void stockHeading() {
 	printf(
@@ -246,22 +258,22 @@ void stockHeading() {
 
 /* -------------------- validation -------------------- */ 
 int optValidation(char opt[], int minOpt, int maxOpt) {
-	int count = 0, idxLoc = 0;
+	int length = 0, index = 0;
 	for (int i = 0; i < strlen(opt); i++) {
 		if (isdigit(opt[i])) {
-			count++;
-			idxLoc = i;
+			length++;
+			index = i;
 		}
 		else if (!isspace(opt[i]))
-			count++;
+			length++;
 	}
-	if (count == 1) {
+	if (length == 1) {
 		for (int i = 0; i <= 9; i++) {
-			if ((opt[idxLoc] < minOpt + 48) || (opt[idxLoc] > maxOpt + 48)) {
+			if ((opt[index] < minOpt + 48) || (opt[index] > maxOpt + 48)) {
 				printf("Invalid Input!! Please Enter Integer (%d-%d) Only!!\n\n", minOpt, maxOpt);
 				return -1;
 			}
-			else if (opt[idxLoc] == i + 48)
+			else if (opt[index] == i + 48)
 				return i;
 		}
 	}
@@ -272,19 +284,30 @@ int optValidation(char opt[], int minOpt, int maxOpt) {
 }
 
 int checkID(char inputID[], Stock stock[], int nStock) {
-	int alphabet = 0, num = 0, alpIndex = 0;
+	int alphabet = 0, num = 0, alpIndex = 0, num1Index = 0, num2Index, num3Index;
 	for (int j = 0; j < strlen(inputID); j++) {
 		if (isalpha(inputID[j])) {
+			inputID[j] = toupper(inputID[j]);
 			alphabet++;
 			alpIndex = j;
 		}
-		else if (isdigit(inputID[j]))
+		else if (isdigit(inputID[j])) {
 			num++;
+			if (num == 1) {
+				num1Index = j;
+			}
+			else if (num == 2) {
+				num2Index = j;
+			}
+			else if (num == 3) {
+				num3Index = j;
+			}
+		}
 	}
-	if (alphabet == 1 && num == 3) {
+	if ((alphabet == 1 && num == 3) && (alpIndex == num1Index - 1 == num2Index-2 == num3Index - 3)) {
 		for (int i = 0; i < nStock; i++) {
 			if (strcmp(inputID, stock[i].prodID) == 0) {
-				return i;
+				return i; // same ID? return index number
 			}
 			
 		}
@@ -299,6 +322,22 @@ int checkID(char inputID[], Stock stock[], int nStock) {
 }
 
 int checkName(char inputName[], Stock stock[], int nStock) {
+	int firstAlp = 0;
+
+	for (int j = 0; j < strlen(inputName); j++) {
+		if (isspace(inputName[j])) {
+			firstAlp = 0;
+		}
+		else if (isalpha(inputName[j])) {
+			firstAlp++;
+			if (firstAlp == 1) {
+				inputName[j] = toupper(inputName[j]);
+			}
+			else 
+				inputName[j] = tolower(inputName[j]);
+		}
+	}
+
 	for (int i = 0; i < nStock; i++) {
 		if (strcmp(inputName, stock[i].prodName) == 0) {
 			return i;
@@ -317,18 +356,18 @@ int comparePrice(double costPrice, double sellPrice) {
 }
 
 char yesNoValidation(char yesNo[]) {
-	int length = 0, idxLoc = 0, isYN = 0;
+	int length = 0, index = 0, isYN = 0;
 	for (int i = 0; i < strlen(yesNo); i++) {
 		if ((isYN = toupper(yesNo[i]) == 'Y') || (isYN = toupper(yesNo[i]) == 'N')) {
 			length++;
-			idxLoc = i;
+			index = i;
 		}
 		else if (!isspace(yesNo[i])) {
 			length++;
 		}
 	}
 	if (length == 1 && isYN)
-		return toupper(yesNo[idxLoc]);
+		return toupper(yesNo[index]);
 	else {
 		errorMsg("Enter Y/N Only");
 		return 'X'; // to identify is a wrong input
@@ -336,12 +375,7 @@ char yesNoValidation(char yesNo[]) {
 }
 
 int checkInteger(double* num) {
-	if (((ceil(*num) - floor(*num)) != 0) || *num <= 0) {
-		return -1;
-	}
-	else
-		return 1;
-
+	return (((ceil(*num) - floor(*num)) != 0) || *num <= 0) ? -1 : 1;
 }
 
 int compareDate(Date startDate, Date endDate) {
@@ -399,26 +433,35 @@ void addStock(Stock* stock, int* nStock, Stock* archivedStock, int* nArcStock) {
 	Stock temp;
 	int check = 0, saveFile = 0;
 
+	printf(
+		"\tADD STOCK FUNCTION\n\n"
+	);
+
 	if (*nStock < MAX_STOCK) {
 		do {
-			do {
-				inputID(temp.prodID, stock, *nStock, &check, "Enter Product ID you wish to add (EXP: P001) > "); // &check will return index number if same as input
+			do { // input Product ID
+				inputID(temp.prodID, stock, *nStock, &check, "Enter Product ID you wish to add (FORMAT: P001) > "); // &check will return index number if same as input
 				if (check == -1)
 					check = checkID(temp.prodID, archivedStock, *nArcStock);
 				if (check >= 0)
 					errorMsg("Reason: Duplicated Product ID");
 			} while (check != -1); // -1 = correct format and no duplicated, -2 = wrong format, >=0 index number from stock
-			do {
+			
+			do { //input Product Name
 				inputName(temp.prodName, stock, *nStock, &check, "Enter Name you wish to add > ");
 				if (check != -1)
 					errorMsg("Reason: Duplicated Product Name");
 			} while (check != -1);
-			inputCostPrice(&temp.costPrice, "Enter Product Cost Price (RM) > ");
-			do {
+			
+			inputCostPrice(&temp.costPrice, "Enter Product Cost Price (RM) > "); // input cost price
+			
+			do { // input sell price and check > cost price?
 				inputSellPrice(&temp.sellPrice, "Enter Product Sell Price (RM) > ");
 			} while (!comparePrice(temp.costPrice, temp.sellPrice));
-			inputMinLvl(&temp.minLvl, "Enter Product Minimum Level > ");
-			do { 
+			
+			inputMinLvl(&temp.minLvl, "Enter Product Minimum Level > "); // input minimum level
+			
+			do { // input qty and check > minimum level?
 				inputQtyInStock(&temp.qtyInStock, "Enter Product Quantity In Stock > ");
 			} while (!checkMinLvl(temp.minLvl, temp.qtyInStock));
 			
@@ -437,7 +480,6 @@ void addStock(Stock* stock, int* nStock, Stock* archivedStock, int* nArcStock) {
 				notSavedMsg();
 				break;
 			}
-			//check = getYesNo("Continue to add (Y/N) ? > ");
 		} while (getYesNo("Continue to add (Y/N) ? > "));
 	}
 	else {
@@ -468,7 +510,6 @@ void inputCostPrice(double* inputCostPrice, char question[]) {
 		scanf("%lf", inputCostPrice);
 		if (check = *inputCostPrice <= 0) {
 			errorMsg("Reason: Not a Decimal Number");
-			//printf("Invalid Input [Reason: Not a Decimal Number]! Please Enter Again!!\n\n");
 		}
 		else
 			check = 0;
@@ -483,8 +524,6 @@ void inputSellPrice(double* inputSellPrice, char question[]) {
 		if (check = *inputSellPrice <= 0) {
 			errorMsg("Reason: Not a Decimal Number");
 		}
-		//else if (comparePrice(costPrice, *inputSellPrice) <= 0)
-		//	check = 0;
 		else
 			check = 0;
 	} while (check);
@@ -503,7 +542,6 @@ void inputQtyInStock(int* inputQty, char question[]) {
 			*inputQty = (int)input;
 			check = 0;
 		}
-		//(check = scanf("%lf", &input) <= 0) || 
 	} while (check);
 }
 void inputMinLvl(int* inputMinLvl, char question[]) {
@@ -567,158 +605,151 @@ void searchStockMenu() {
 	);
 }
 void searchStock(Stock stock[], int nStock) {
-	char opt[100];
-	int checkedOpt = 0, conti, check;
+	char opt[50];
+	int checkedOpt = 0, index;
 	Stock display[MAX_STOCK], temp;
 	do {
 		do {
 			searchStockMenu();
 			checkedOpt = inputOpt(opt, 0, 9);
-		} while (checkedOpt < 0);
+		} while (checkedOpt == -1);
 
 		switch (checkedOpt) {
 		case 0:
 			return;
-		case 1:  
-			//searchByID
-			check = -1;
-			inputID(temp.prodID, stock, nStock, &check, "Enter Product ID you wish to search > ");
+		case 1:  //searchByID
+			do {
+				inputID(temp.prodID, stock, nStock, &index, "Enter Product ID you wish to search (FORMAT: P001) > ");
 
-			if (check == -1) {
+				if (index == -1) {
+					noRecordMsg();
+				}
+				else if(index >= 0)
+					displaySingleStock(stock[index]);
+			} while (index == -2);
+			break;
+		case 2:  //searchByName
+			inputName(temp.prodName, stock, nStock, &index, "Enter Product Name you wish to search > ");
+
+			if (index == -1) {
 				noRecordMsg();
 			}
 			else
-				displaySingleStock(stock[check]);
+				displaySingleStock(stock[index]);
 			break;
-		case 2:
-			//searchByName
-			check = -1;
-			inputName(temp.prodName, stock, nStock, &check, "Enter Product Name you wish to search > ");
-
-			if (check == -1) {
-				noRecordMsg();
-			}
-			else
-				displaySingleStock(stock[check]);
-			break;
-		case 3:
-			//searchByCostPrice
-			check = 0;
+		case 3:  //searchByCostPrice
+			index = 0;
 
 			inputCostPrice(&temp.costPrice, "Enter Product Cost Price (RM) You Wish to Search > ");
 			for (int i = 0; i < nStock; i++) {
 				if (temp.costPrice == stock[i].costPrice) {
-					display[check] = stock[i];
-					check++;
+					display[index] = stock[i];
+					index++;
 				}
 			}
-			if (check == 0) {
+			if (index == 0) {
 				noRecordMsg();
 			}
 			else
-				sortByID(display, check);
+				sortByID(display, index);
 			break;
-		case 4:
-			//searchBySellPrice
-			check = 0;
+		case 4:  //searchBySellPrice
+			index = 0;
 
 			inputSellPrice(&temp.sellPrice, "Enter Product Sell Price (RM) You Wish to Search > ");
 			for (int i = 0; i < nStock; i++) {
 				if (temp.sellPrice == stock[i].sellPrice) {
-					display[check] = stock[i];
-					check++;
+					display[index] = stock[i];
+					index++;
 				}
 			}
-			if (check == 0) {
+			if (index == 0) {
 				noRecordMsg();
 			}
 			else
-				sortByID(display, check);
+				sortByID(display, index);
 			break;
-		case 5:
-			//searchByQtyInStock
-			check = 0;
+		case 5:  //searchByQtyInStock
+			index = 0;
 
 			inputQtyInStock(&temp.qtyInStock, "Enter Product Quantity In Stock You Wish to Search > ");
 			for (int i = 0; i < nStock; i++) {
 				if (temp.qtyInStock == stock[i].qtyInStock) {
-					display[check] = stock[i];
-					check++;
+					display[index] = stock[i];
+					index++;
 				}
 			}
-			if (check == 0) {
+			if (index == 0) {
 				noRecordMsg();
 			}
 			else
-				sortByID(display, check);
+				sortByID(display, index);
 			break;
-		case 6:
-			//searchByMinLvl
-			check = 0;
+		case 6:  //searchByMinLvl
+			index = 0;
 
 			inputMinLvl(&temp.minLvl, "Enter Product Minimum Level You Wish to Search > ");
 			for (int i = 0; i < nStock; i++) {
 				if (temp.minLvl == stock[i].minLvl) {
-					display[check] = stock[i];
-					check++;
+					display[index] = stock[i];
+					index++;
 				}
 			}
-			if (check == 0) {
+			if (index == 0) {
 				noRecordMsg();
 			}
 			else
-				sortByID(display, check);
+				sortByID(display, index);
 			break;
 		case 7:
 			//searchByReorderQty
-			check = 0;
+			index = 0;
 
 			inputReorderQty(&temp.reorderQty, "Enter Product Reorder Quantity You Wish to Search > ");
 			for (int i = 0; i < nStock; i++) {
 				if (temp.reorderQty == stock[i].reorderQty) {
-					display[check] = stock[i];
-					check++;
+					display[index] = stock[i];
+					index++;
 				}
 			}
-			if (check == 0) {
+			if (index == 0) {
 				noRecordMsg();
 			}
 			else
-				sortByID(display, check);
+				sortByID(display, index);
 			break;
 		case 8:
 			//searchByDate
-			check = 0;
+			index = 0;
 			inputDate(&temp.sysDate, "Enter Date (DD-MM-YYYY) > ");
 			for (int i = 0; i < nStock; i++) {
 				if ((temp.sysDate.day == stock[i].sysDate.day) && (temp.sysDate.month == stock[i].sysDate.month) && (temp.sysDate.year == stock[i].sysDate.year)) {
-					display[check] = stock[i];
-					check++;
+					display[index] = stock[i];
+					index++;
 				}
 			}
-			if (check == 0) {
+			if (index == 0) {
 				noRecordMsg();
 			}
 			else
-				sortByID(display, check);
+				sortByID(display, index);
 			break;
 		case 9:
-			check = 0;
+			index = 0;
 			inputTime(&temp.sysTime, "Enter Time (HH:MM) > ");
 			for (int i = 0; i < nStock; i++) {
 				if ((temp.sysTime.hour == stock[i].sysTime.hour) && (temp.sysTime.min == stock[i].sysTime.min)) {
-					display[check] = stock[i];
-					check++;
+					display[index] = stock[i];
+					index++;
 				}
 			}
-			if (check == 0) {
+			if (index == 0) {
 				noRecordMsg();
 			}
 			else
-				sortByID(display, check);
+				sortByID(display, index);
 			break;
 		}
-		//conti = getYesNo("Continue to search (Y/N) ? > ");
 	} while (getYesNo("Continue to search (Y/N) ? > "));
 }
 
@@ -741,13 +772,13 @@ void modifyStockMenu() {
 	);
 }
 void modifyStock(Stock* stock, int* nStock, Stock* archivedStock, int* nArcStock) {
-	char modifyID[6], opt[100];
-	int location = -1, check = 0, checkedOpt, saveFile, sameInput;
+	char modifyID[6], opt[50];
+	int location, check, checkedOpt, sameInput;
 	Stock temp;
 
 	do {
 		do {
-			inputID(modifyID, stock, *nStock, &location, "Enter Product ID you wish to modify > ");
+			inputID(modifyID, stock, *nStock, &location, "Enter Product ID you wish to modify (FORMAT: P001) > ");
 			if (location == -1)
 				errorMsg("Reason: No Such Product ID");
 			else if(location != -2)
@@ -759,7 +790,7 @@ void modifyStock(Stock* stock, int* nStock, Stock* archivedStock, int* nArcStock
 		switch (checkedOpt) {
 		case 1:
 			do {
-				inputID(temp.prodID, stock, *nStock, &check, "Enter New Product ID > "); // check will return index number
+				inputID(temp.prodID, stock, *nStock, &check, "Enter New Product ID (FORMAT: P001) > "); // check will return index number
 				if (check == -1)
 					check = checkID(temp.prodID, archivedStock, *nArcStock);
 
@@ -862,8 +893,7 @@ void modifyStock(Stock* stock, int* nStock, Stock* archivedStock, int* nArcStock
 		case 0:
 			return;
 		}
-		saveFile = getYesNo("Do you want to save latest records into file (Y/N) ? > ");
-		switch (saveFile) {
+		switch (getYesNo("Do you want to save latest records into file (Y/N) ? > ")) {
 		case 1:
 			//save each record after confirmed
 			switch (checkedOpt) {
@@ -889,7 +919,6 @@ void modifyStock(Stock* stock, int* nStock, Stock* archivedStock, int* nArcStock
 				stock[location].sysTime = temp.sysTime;
 				break;
 			}
-			//saveCurrentDateTime(&stock[location].sysDate, &stock[location].sysTime);
 			writeStockFile(stock, *nStock, archivedStock, *nArcStock);
 			savedMsg();
 			break;
@@ -897,7 +926,6 @@ void modifyStock(Stock* stock, int* nStock, Stock* archivedStock, int* nArcStock
 			notSavedMsg();
 			break;
 		}
-		//check = getYesNo("Continue to modify (Y/N) ? > ");
 	} while (getYesNo("Continue to modify (Y/N) ? > "));
 }
 
@@ -915,11 +943,9 @@ void inputDate(Date* date, char question[]) {
 	} while (check);
 }
 int inputTwoDates(Date* startDate, Date* endDate) {
-	int checkDates;
+
 	inputDate(startDate, "Enter start date (DD-MM-YYYY) > ");
 	inputDate(endDate, "Enter end date (DD-MM-YYYY) > ");
-	//checkDates = compareDate(*startDate, *endDate);
-	//return checkDates;
 
 	return compareDate(*startDate, *endDate);
 }
@@ -940,8 +966,7 @@ void inputTime(Time* time, char question[]) {
 
 /* -------------------- 4 Display -------------------- */
 void displayStockMenu(Stock stock[], int size, Stock arcStock[], int nArcStock) {
-	char opt[100], conti;
-	int checkedOpt;
+	char opt[50];
 	do {
 		printf(
 			"=============================\n"
@@ -957,8 +982,7 @@ void displayStockMenu(Stock stock[], int size, Stock arcStock[], int nArcStock) 
 			"[8] Archived Stock\n"
 			"[0] BACK\n"
 		);
-		checkedOpt = inputOpt(opt, 0, 8);
-		switch (checkedOpt) {
+		switch (inputOpt(opt, 0, 8)) {
 		case 1:
 			displayAllStock(stock, size); break;
 		case 2:
@@ -979,7 +1003,6 @@ void displayStockMenu(Stock stock[], int size, Stock arcStock[], int nArcStock) 
 		case 0:
 			return;
 		}
-		//conti = getYesNo("Continue to Display? (Y - Back to Search Menu / N - Back to Stock Menu) > ");
 	} while (getYesNo("Continue to Display? (Y - Back to Search Menu / N - Back to Stock Menu) > "));
 }
 
@@ -1018,9 +1041,7 @@ void sortByID(Stock stock[], int nStock) {
 				copy[j] = copy[i]; //when j smaller than i, j will interchange with i.
 				copy[i] = temp;
 			}
-			//displaySingleStock(stock[j]); printf("\n");
 		}
-		//displayAllStock(stock, nStock); printf("\n");
 	}
 	displayAllStock(copy, nStock);
 }
@@ -1131,7 +1152,7 @@ void sortByTime(Stock stock[], int nStock) {
 /* -------------------- 5 Update -------------------- */
 void updateStockStatus(Stock* stock, int* nStock, Stock* archivedStock, int* nArcStock) {
 	char opt[50], tempID[6];
-	int location, yesNo, checkedOpt, conti;
+	int location, yesNo;
 
 	do {
 		printf(
@@ -1142,9 +1163,9 @@ void updateStockStatus(Stock* stock, int* nStock, Stock* archivedStock, int* nAr
 			"[2] From Archived Stock\n"
 			"[0] BACK\n"
 		);
-		checkedOpt = inputOpt(opt, 0, 2);
+		//checkedOpt = inputOpt(opt, 0, 2);
 
-		switch (checkedOpt) {
+		switch (inputOpt(opt, 0, 2)) {
 		case 0:
 			return;
 		case 1:
@@ -1158,8 +1179,8 @@ void updateStockStatus(Stock* stock, int* nStock, Stock* archivedStock, int* nAr
 						displaySingleStock(stock[location]);
 				} while (location == -1);
 
-				yesNo = getYesNo("Do you want to archive it from active stock? (Y/N) > ");
-				switch (yesNo) {
+				//yesNo = getYesNo("Do you want to archive it from active stock? (Y/N) > ");
+				switch (getYesNo("Do you want to archive it from active stock? (Y/N) > ")) {
 				case 1:
 					strcpy(stock[location].status, "Archived");
 					archivedStock[*nArcStock] = stock[location];
@@ -1190,8 +1211,8 @@ void updateStockStatus(Stock* stock, int* nStock, Stock* archivedStock, int* nAr
 						displaySingleStock(archivedStock[location]);
 				} while (location == -1);
 
-				yesNo = getYesNo("Do you want to active it from archive stock? (Y/N) > ");
-				switch (yesNo) {
+				//yesNo = getYesNo("Do you want to active it from archive stock? (Y/N) > ");
+				switch (getYesNo("Do you want to active it from archive stock? (Y/N) > ")) {
 				case 1:
 					strcpy(archivedStock[location].status, "Active");
 					stock[*nStock] = archivedStock[location];
@@ -1212,7 +1233,6 @@ void updateStockStatus(Stock* stock, int* nStock, Stock* archivedStock, int* nAr
 			}
 			break;
 		}
-		//conti = getYesNo("Continue to Update Stock Status? (Y/N) > ");
 	} while (getYesNo("Continue to Update Stock Status? (Y/N) > "));
 }
 
@@ -1227,23 +1247,16 @@ void stockReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock) {
 			"===========================\n"
 			"[1] Overview Report\n"
 			"[2] Low Stock Report\n"
-			"[3] Products Added In Specific Period of Dates Report\n"
+			"[3] Products by Date Range Report\n"
 			"[0] BACK\n"
 		);
-		do {
-			checkedOpt = inputOpt(opt, 0, 3);
-		} while (checkedOpt == -1);
-		switch (checkedOpt) {
+		switch (inputOpt(opt, 0, 3)) {
 		case 1:
-			overviewReport(stock, nStock, arcStock, nArcStock);
-			break;
+			overviewReport(stock, nStock, arcStock, nArcStock); break;
 		case 2:
-			lowStockReport(stock, nStock, arcStock, nArcStock);
-
-			break;
+			lowStockReport(stock, nStock, arcStock, nArcStock);	break;
 		case 3:
-			trackDateReport(stock, nStock, arcStock, nArcStock);
-			break;
+			dateRangeReport(stock, nStock, arcStock, nArcStock); break;
 		case 0:
 			return;
 		}
@@ -1252,9 +1265,13 @@ void stockReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock) {
 
 void overviewReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock) {
 	printf(
+		"+==============================================================================+\n"
+		"|%78s|\n"
+		"|                               OVERVIEW REPORT                                |\n"
+		"|%78s|\n"
 		"+====+=======+===============================+===========+=====================+\n"
 		"|%3s | %-6s| %-30s| %-10s| %-20s|\n"
-		"+====+=======+===============================+===========+=====================+\n", "NO.", "ID", "PRODUCT NAME", "Status", "QUANTITY IN STOCK"
+		"+====+=======+===============================+===========+=====================+\n", " ", " ", "NO.", "ID", "PRODUCT NAME", "Status", "QUANTITY IN STOCK"
 	);
 	int i, sumStock = 0, sumArcStock = 0;
 	for (i = 0; i < nStock; i++) {
@@ -1270,6 +1287,7 @@ void overviewReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock) 
 		"+====+=======+===============================+===========+=====================+\n"
 		"| %-55s|%20d |\n"
 		"| %-55s|%20d |\n"
+		"+========================================================+=====================+\n"
 		"| %-55s|%20d |\n"
 		"+========================================================+=====================+\n"
 		" < %d Row(s) Created >\n\n", "QUANTITY IN STOCK FROM ACTIVE STOCK", sumStock, "QUANTITY IN STOCK FROM ARCHIVED STOCK", sumArcStock, "TOTAL QUANTITY IN STOCK", sumStock + sumArcStock, i);
@@ -1281,11 +1299,11 @@ void lowStockReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock) 
 	printf(
 		"+=======================================================================================================================================================+\n"
 		"| %150s|\n"
-		"| %-150s|\n"
+		"|                                                    PRODUCT(S) THAT HITTED OR NEAR TO MINIMUM LEVEL                                                    |\n"
 		"| %150s|\n"
-		"+=======================================================================================================================================================+\n", " ", "PRODUCT(S) THAT HITTED OR NEAR TO MINIMUM LEVEL", " "
+		"+=======================================================================================================================================================+\n\n",  " ", " "
 	);
-	printf("FROM ACTIVE STOCK\n");
+	printf("[FROM ACTIVE STOCK]\n");
 	for (int i = 0; i < nStock; i++) {
 		if ((stock[i].qtyInStock == stock[i].minLvl) || (stock[i].qtyInStock - stock[i].minLvl <= 20)) {
 			tempStock[t1] = stock[i];
@@ -1297,7 +1315,7 @@ void lowStockReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock) 
 	else
 		noRecordMsg();
 
-	printf("FROM ARCHIVED STOCK\n");
+	printf("[FROM ARCHIVED STOCK]\n");
 	for (int i = 0; i < nArcStock; i++) {
 		if ((arcStock[i].qtyInStock == arcStock[i].minLvl)|| (arcStock[i].qtyInStock - arcStock[i].minLvl <= 20)) {
 			tempArcStock[t2] = arcStock[i];
@@ -1310,7 +1328,7 @@ void lowStockReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock) 
 		noRecordMsg();
 }
 
-void trackDateReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock) {
+void dateRangeReport(Stock stock[], int nStock, Stock arcStock[], int nArcStock) {
 	Date startDate, endDate;
 	int checkedDate;
 	do {
@@ -1346,9 +1364,13 @@ void displayByDates(Date startDate, Date endDate, Stock stock[], int nStock, Sto
 	}
 	else {
 		printf(
+			"+============================================================================+\n"
+			"|%76s|\n"
+			"|                 PRODUCT(S) FROM %02d-%02d-%4d TO %02d-%02d-%4d                   |\n"
+			"|%76s|\n"
 			"+====+=======+===============================+===================+===========+\n"
 			"|%3s | %-6s| %-30s| %-17s | %-10s|\n"
-			"+====+=======+===============================+===================+===========+\n", "NO.", "ID", "PRODUCT NAME", "ADDED DATE & TIME", "Status"
+			"+====+=======+===============================+===================+===========+\n", " ", startDate.day, startDate.month, startDate.year, endDate.day, endDate.month, endDate.year, " ", "NO.", "ID", "PRODUCT NAME", "ADDED DATE & TIME", "Status"
 		);
 		int j;
 		for (j = 0; j < count; j++) {
