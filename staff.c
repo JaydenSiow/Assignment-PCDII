@@ -25,10 +25,9 @@ typedef struct {
 void checkStaffID(char[], int*, char(*)[]);
 int checkStaffName(char[]);
 int checkBirthDate(int, int, int);
-int checkStaffGender(char);
-void checkStaffPosition(char, int*, char*);
+void checkStaffGender(int, char*, int*);
+void checkStaffPosition(int, char*, int*);
 int checkPassword(char[]);
-int checkRecovery(char[], char[]);
 int checkNumber(char[]);
 int checkDecision(char);
 
@@ -63,8 +62,7 @@ void displayAllStaff(Staff staff[], int);          //used in search, modify and 
 char* getStaffID(Staff* staff);
 char* getStaffName(Staff* staff);
 void getStaffBirth(Staff* staff, int* day, int* month, int* year);
-char getStaffGender(Staff staff);
-char getStaffPosition(Staff staff);
+int getGenderAndPosition();
 char* getStaffPassword(Staff* staff);
 char* getStaffRecovery(Staff* staff);
 
@@ -184,54 +182,43 @@ int checkBirthDate(int day, int month, int year) {
         return 0;
 }
 
-int checkStaffGender(char gender) {
-    switch (gender) {
-    case 'M':
-    case 'F':
-        return 0;
-    default:
-        printf("Invalid gender!!! Please re-enter \n");
-        return 1;
+void checkStaffGender(int gender, char* staffGender, int* validation) {
+    if (gender == 1) {
+        *staffGender = 'M';
+        *validation = 0;
+    }
+    else if (gender == 2) {
+        *staffGender = 'F';
+        *validation = 0;
+    }
+    else{
+        printf("\nPlease enter a valid number (1-2)!\n");
+        *validation = 1;
     }
 }
 
-void checkStaffPosition(char charPosition, int *validation, char *position) {
-    if (charPosition == 'A') {
-        strcpy(position, "ADMINISTRATOR");
+void checkStaffPosition(int position, char* staffPosition, int* validation) {
+    if (position == 1) {
+        strcpy(staffPosition, "ADMINISTRATOR");
         *validation = 0;
     }
-    else if (charPosition == 'S') {
-        strcpy(position, "STAFF");
+    else if (position == 2) {
+        strcpy(staffPosition, "STAFF");
         *validation = 0;
     }
     else {
-        printf("Invalid postion!!! Please re-enter\n");
+        printf("\nPlease enter a valid number (1-2)!\n");
         *validation = 1;
     }
 }
 
 int checkPassword(char password[]) {
     if (strlen(password) < 6) {
-        printf("Insufficient password length!!! Please input a new password\n");
+        printf("Insufficient length!!! Please re-enter \n");
         return 1;
     }
     else
         return 0;
-}
-
-int checkRecovery(char password[], char recovery[]) {
-    if (strlen(recovery) >= 6) {
-        if (strcmp(password, recovery) == 0) {
-            printf("The password is same as the password recovery!!! Re-enter the password recovery\n");
-            return 1;
-        }
-        else
-            return 0;
-    }
-    else {
-        printf("Insufficient password length!!! Please input a new password\n");
-        return 1;
-    }
 }
 
 int checkNumber(char input[]) {
@@ -367,33 +354,23 @@ void getStaffBirth(Staff* staff, int* day, int* month, int* year) {
     staff->birthDate.year = *year;
 }
 
-char getStaffGender(Staff staff) {
-    printf("\nEnter gender (M/F): ");
+int getGenderAndPosition() {
+    char input[15], attribute;
     rewind(stdin);
-    scanf(" %c", &staff.gender);
-    staff.gender = toupper(staff.gender);
-    return staff.gender;
-}
-
-char getStaffPosition(Staff staff) {
-    char charPosition;
-    printf("\nEnter position (A = Administrator / S = Staff): ");
-    rewind(stdin);
-    scanf(" %c", &charPosition);
-
-    charPosition = toupper(charPosition);
-    return charPosition;
+    scanf(" %s", input);
+    attribute = checkNumber(input);
+    return attribute;
 }
 
 char* getStaffPassword(Staff* staff) {
-    printf("\nEnter password (At least 6 numbers/characters): ");
+    printf("\nEnter new password (At least 6 numbers/characters): ");
     rewind(stdin);
     scanf(" %[^\n]", staff->password);
     return staff->password;
 }
 
 char* getStaffRecovery(Staff* staff) {
-    printf("\nEnter password recovery (At least 6 numbers/characters): ");
+    printf("\nEnter new password recovery (At least 6 numbers/characters): ");
     rewind(stdin);
     scanf(" %[^\n]", staff->recovery);
     return staff->recovery;
@@ -410,7 +387,7 @@ char getDecision() {
 //----------------------------------------------Add Staff----------------------------------------------
 void StaffAdd() {
     Staff staff;
-    char continueAdd;
+    char continueAdd, input[10];
     int validation, duplicateID;
 
     do {
@@ -435,15 +412,23 @@ void StaffAdd() {
         } while (validation);
 
         do {
-            staff.gender = getStaffGender(staff);
-            validation = checkStaffGender(staff.gender);
+            int gender;
+            char staffGender;
+
+            printf("\nEnter gender by number (1. Male / 2. Female): ");
+            gender = getGenderAndPosition();
+            checkStaffGender(gender, &staffGender, &validation);
+            staff.gender = staffGender;
         } while (validation);
 
-        char charPosition, position[15];
         do {
-            charPosition = getStaffPosition(staff);
-            checkStaffPosition(charPosition, &validation, position);
-            strcpy(staff.position, position);
+            int position;
+            char staffPosition[15];
+
+            printf("\nEnter staff position by number (1. Administrator / 2. Staff): ");
+            position = getGenderAndPosition();
+            checkStaffPosition(position, &staffPosition, &validation);
+            strcpy(staff.position, staffPosition);
         } while (validation);
 
         do {
@@ -453,7 +438,7 @@ void StaffAdd() {
 
         do {
             getStaffRecovery(&staff);
-            validation = checkRecovery(staff.password, staff.recovery);
+            validation = checkPassword(staff.recovery);
         } while (validation);
 
         printf("\nStaff added successfully!!!\n");
@@ -560,12 +545,13 @@ void searchByAttr(int choice){
 
         do {
             printf("\nSelect day, month or year to search: ");
+            rewind(stdin);
             scanf(" %s", input);
 
             date = checkNumber(input);
 
             if (date != 1 && date != 2 && date != 3)
-                printf("\nPlease enter a valid number (1-3) to search!\n\n");
+                printf("\nPlease enter a valid number (1-3) to search!\n");
         } while (date != 1 && date != 2 && date != 3);
 
         if (date == 1) {
@@ -597,50 +583,28 @@ void searchByAttr(int choice){
         }
     }
     else if (choice == 4) {
-        char input[10];
         int gender;
-        printf("\nSearch by:\n");
-        printf("1. Male\n");
-        printf("2. Female\n");
+        char staffGender;
 
         do {
-            printf("\nSearch staff by gender: ");
-            scanf(" %s", input);
-
-            gender = checkNumber(input);
-
-            if (gender != 1 && gender != 2)
-                printf("\nPlease enter a valid number (1-2) to search!\n");
-        } while (gender != 1 && gender != 2);
-
-        if (gender == 1)
-            getAttr.gender = 'M';
-        else if (gender == 2)
-            getAttr.gender = 'F';
+            printf("\nSearch gender by number (1. Male / 2. Female): ");
+            gender = getGenderAndPosition();
+            checkStaffGender(gender, &staffGender, &validation);
+            getAttr.gender = staffGender;
+        } while (validation);
 
         displayCertainStaff(staff, staffCount, "void", "void", 0, 0, 0, getAttr.gender, "void");
     }
     else if (choice == 5) {
-        char input[10];
         int position;
-        printf("\nSearch by:\n");
-        printf("1. Administrator\n");
-        printf("2. Staff\n");
+        char staffPosition[15];
 
         do {
-            printf("\nSearch staff by position: ");
-            scanf(" %s", input);
-
-            position = checkNumber(input);
-
-            if (position != 1 && position != 2)
-                printf("\nPlease enter a valid number (1-2) to search!\n");
-        } while (position != 1 && position != 2);
-
-        if (position == 1)
-            strcpy(getAttr.position, "ADMINISTRATOR");
-        else if(position == 2)
-            strcpy(getAttr.position, "STAFF");
+            printf("\nSearch staff position by number (1. Administrator / 2. Staff): ");
+            position = getGenderAndPosition();
+            checkStaffPosition(position, &staffPosition, &validation);
+            strcpy(getAttr.position, staffPosition);
+        } while (validation);
 
         displayCertainStaff(staff, staffCount, "void", "void", 0, 0, 0, 'X', getAttr.position);
     }
@@ -734,17 +698,43 @@ void StaffModify() {
                     }
                     else if (attribute == 6) {
                         do {
-                            getStaffPassword(&modifyAttr);
-                            validation = checkPassword(modifyAttr.password);
+                            printf("\nEnter current password: (Input -1 to exit staff menu): ");
+                            rewind(stdin);
+                            scanf(" %[^\n]", modifyAttr.password);
+                            if (strcmp(staff[i].password, modifyAttr.password) == 0) {
+                                do {
+                                    getStaffPassword(&modifyAttr);
+                                    validation = checkPassword(modifyAttr.password);
+                                } while (validation);
+                                strcpy(staff[i].password, modifyAttr.password);
+                            }
+                            else if (strcmp(modifyAttr.password, "-1") == 0)
+                                StaffMenu();
+                            else {
+                                printf("Incorrect password!\n");
+                                validation = 1;
+                            }
                         } while (validation);
-                        strcpy(staff[i].password, modifyAttr.password);
                     }
                     else if (attribute == 7) {
                         do {
-                            getStaffRecovery(&modifyAttr);
-                            validation = checkRecovery(modifyAttr.password, modifyAttr.recovery);
+                            printf("\nEnter current password recovery: (Input -1 to exit staff menu): ");
+                            rewind(stdin);
+                            scanf(" %[^\n]", modifyAttr.recovery);
+                            if (strcmp(staff[i].recovery, modifyAttr.recovery) == 0) {
+                                do {
+                                    getStaffRecovery(&modifyAttr);
+                                    validation = checkPassword(modifyAttr.recovery);
+                                } while (validation);
+                                strcpy(staff[i].recovery, modifyAttr.recovery);
+                            }
+                            else if (strcmp(modifyAttr.recovery, "-1") == 0)
+                                StaffMenu();
+                            else {
+                                printf("Incorrect password recovery!\n");
+                                validation = 1;
+                            }
                         } while (validation);
-                        strcpy(staff[i].password, modifyAttr.password);
                     }
                     else if (attribute == 8)
                         StaffMenu();
