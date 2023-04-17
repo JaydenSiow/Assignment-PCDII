@@ -26,7 +26,7 @@ void checkStaffID(char[], int*, char(*)[]);
 int checkStaffName(char[]);
 int checkBirthDate(int, int, int);
 void checkStaffGender(int, char*, int*);
-void checkStaffPosition(int, char*, int*);
+void checkStaffPosition(int, char(*), int*);
 int checkPassword(char[]);
 int checkNumber(char[]);
 int checkDecision(char);
@@ -197,7 +197,7 @@ void checkStaffGender(int gender, char* staffGender, int* validation) {
     }
 }
 
-void checkStaffPosition(int position, char* staffPosition, int* validation) {
+void checkStaffPosition(int position, char (*staffPosition), int* validation) {
     if (position == 1) {
         strcpy(staffPosition, "ADMINISTRATOR");
         *validation = 0;
@@ -427,7 +427,7 @@ void StaffAdd() {
 
             printf("\nEnter staff position by number (1. Administrator / 2. Staff): ");
             position = getGenderAndPosition();
-            checkStaffPosition(position, &staffPosition, &validation);
+            checkStaffPosition(position, staffPosition, &validation);
             strcpy(staff.position, staffPosition);
         } while (validation);
 
@@ -602,7 +602,7 @@ void searchByAttr(int choice){
         do {
             printf("\nSearch staff position by number (1. Administrator / 2. Staff): ");
             position = getGenderAndPosition();
-            checkStaffPosition(position, &staffPosition, &validation);
+            checkStaffPosition(position, staffPosition, &validation);
             strcpy(getAttr.position, staffPosition);
         } while (validation);
 
