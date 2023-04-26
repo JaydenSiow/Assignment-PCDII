@@ -9,6 +9,8 @@
 #define NAME "product name"
 #define DOUBLE "decimal number"
 #define CHAR "single char"
+#define DATE "date"
+#define TIME "time"
 
 typedef struct {
 	int day, month, year;
@@ -31,18 +33,16 @@ void readStockFile(StockInfo stock[], int* nStock);
 void writeStockFile(StockInfo stock[], int* nStock);
 
 //base function
-void prompt(char input[]);
+void prompt(char input[], char question[]);
 void capitalizeString(char input[]);
 int checkFormatFor(const char type[], char input[]);
 void cleanLeadingSpace(char input[]);
 void cleanEndingSpace(char input[]);
 int validateProductID(char input[]);
-int validateNumericValue(char input[], double* output);
 int promptYesNo(char question[]);
 int checkYesNo(char input[]);
 int promptInteger(char question[]);
 int integerChecker(double input);
-int validateIntegerFromString(char input[], int* output);
 double promptDecimal(char question[]);
 void promptID(char id[], char question[]);
 void promptName(char name[], char question[]);
@@ -52,6 +52,8 @@ void promptTime(Time* time, char question[]);
 int checkTime(Time time);
 double promptPrice(char question[]);
 int promptQty(char question[]);
+double decimalConverter(char input[]);
+Date dateConverter(char input[]);
 
 //message
 void noRecordMsg();

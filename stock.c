@@ -13,6 +13,17 @@ void main() {
 
 	readStockFile(stock, &size);
 
+	char temp[STRSIZE];
+	Date date;
+	while (1) {
+		prompt(temp, "Enter date: ");
+		if (checkFormatFor(DATE, temp)) {
+			date = dateConverter(temp);
+			printf("%02d-%02d-%04d\n\n", date.day, date.month, date.year);
+		}
+		else printf("Invalid\n\n");
+	}
+
 	do {
 		CLS;
 		stockMainMenu();
@@ -117,7 +128,8 @@ void writeStockFile(StockInfo stock[], int* nStock) {
 	fclose(fp);
 }
 
-void prompt(char input[]) {
+void prompt(char input[], char question[]) {
+	printf("%s", question);
 	rewind(stdin);
 	fgets(input, STRSIZE, stdin);
 }
@@ -126,8 +138,7 @@ int promptYesNo(char question[]) {
 	char input[STRSIZE];
 	int invalid;
 	do {
-		printf("%s", question);
-		prompt(input);
+		prompt(input, question);
 		if (invalid = !checkYesNo(input)) 
 			invalidMsg();
 	} while (invalid);
@@ -139,91 +150,77 @@ int checkYesNo(char input[]) {
 	else return 0;
 }
 
-int promptInteger(char question[]) {
+double promptDecimal(char question[]) {
 	char option[STRSIZE];
-	int opt,invalid;
+	int invalid;
 	do {
-		printf("%s", question);
-		prompt(option);
-		if (invalid = !validateIntegerFromString(option, &opt))
+		prompt(option, question);
+		if (invalid = !checkFormatFor(DOUBLE, option))
 			invalidMsg();
+		else
+			return decimalConverter(option);
 	} while (invalid);
-	return opt;
 }
-int validateIntegerFromString(char input[], int* output) {
-	double temp;
-	if (validateNumericValue(input, &temp)) {
-		*output = (int)temp;
-		return integerChecker(temp);
+double decimalConverter(char input[]) {
+	int dot = 0, length = strlen(input);
+	double num = 0;
+	//locate dot
+	for (int i = 0; i < length; i++) {
+		if (input[i] == '.') {
+			dot = i;
+			break;
+		}
 	}
-	else return 0;
+	if (dot == 0)
+		dot = length;
+
+	if (input[0] == '-') { //negative
+		for (int j = 1; j < length; j++) {
+			if (input[j] == '.')
+				continue;
+			else if (j < dot)
+				num += (int)(input[j] - 48) * pow(10, dot - j - 1);
+			else if (input[j] != '\0')
+				num += (int)(input[j] - 48) / pow(10, j - dot);
+		}
+		return -num;
+	}
+	else { // positive
+		for (int j = 0; j < length; j++) {
+			if (input[j] == '.')
+				continue;
+			else if (j < dot)
+				num += (int)(input[j] - 48) * pow(10, dot - j - 1);
+			else if (input[j] != '\0')
+				num += (int)(input[j] - 48) / pow(10, j - dot);
+		}
+		return num;
+	}
+}
+
+int promptInteger(char question[]) {
+	int invalid;
+	double num;
+	do {
+		num = promptDecimal(question);
+		if (invalid = !integerChecker(num))
+			invalidMsg();
+		else return (int)num;
+	} while (invalid);
+
 }
 int integerChecker(double input) {
 	return (ceil(input) - floor(input) == 0) ? 1 : 0;
 }
 
-double promptDecimal(char question[]) {
-	char option[STRSIZE];
-	double output; int invalid;
-	do {
-		printf("%s", question);
-		prompt(option);
-		if (invalid = !validateNumericValue(option, &output))
-			invalidMsg();
-	} while (invalid);
-	return output;
-}
-int validateNumericValue(char input[], double* output) {
-	if (checkFormatFor(DOUBLE, input)) {
-		int dot = 0, length = strlen(input);
-		double num = 0;
-		//locate dot
-		for (int i = 0; i < length; i++) {
-			if (input[i] == '.') {
-				dot = i;
-				break;
-			}
-		}
-		if (dot == 0)
-			dot = length;
-
-		if (input[0] == '-') { //negative
-			for (int j = 1; j < length; j++) {
-				if (input[j] == '.')
-					continue;
-				else if (j < dot)
-					num += (int)(input[j] - 48) * pow(10, dot - j - 1);
-				else if (input[j] != '\0')
-					num += (int)(input[j] - 48) / pow(10, j - dot);
-			}
-			*output = -num;
-			return 1;
-		}
-		else { // positive
-			for (int j = 0; j < length; j++) {
-				if (input[j] == '.')
-					continue;
-				else if (j < dot)
-					num += (int)(input[j] - 48) * pow(10, dot - j - 1);
-				else if (input[j] != '\0')
-					num += (int)(input[j] - 48) / pow(10, j - dot);
-			}
-			*output = num;
-			return 1;
-		}
-	}
-	else return 0;
-}
-
 void promptID(char id[], char question[]) {
 	int invalid;
 	do {
-		printf("%s", question);
-		prompt(id);
+		prompt(id, question);
 		if (invalid = !validateProductID(id))
 			invalidMsg();
 	} while (invalid);
-	id[0] = toupper(id[0]);
+	capitalizeString(id);
 }
 int validateProductID(char input[]) {
 	if (checkFormatFor(ID, input))
@@ -234,8 +231,7 @@ int validateProductID(char input[]) {
 void promptName(char name[], char question[]) {
 	int invalid;
 	do {
-		printf("%s", question);
-		prompt(name);
+		prompt(name, question);
 		if (invalid = !checkFormatFor(NAME, name))
 			invalidMsg();
 	} while (invalid);
@@ -263,6 +259,46 @@ void promptDate(Date* date, char question[]) {
 		}
 	} while (wrong);
 }
+
+Date dateConverter(char input[]) {
+	Date temp = { 0 };
+	int punct1 = 0, punct2 = 0;
+	char day[3], month[3], year[5];
+	int i, length = strlen(input);
+	for (i = 0; i < length; i++) {
+		if (input[i] == '/' || input[i] == '-' || input[i] == ' ' || input[i] == '.') {
+			if (punct1 > 0) {
+				punct2 = i;
+				break;
+			}
+			else if (punct1 == 0) {
+				punct1 = i;
+			}
+		}
+	}
+	for (int i = 0; i < 3; i++) {
+		if (isdigit(input[i]))
+			day[i] = input[i];
+		else 
+			day[i] = '\0';
+	}
+	for (int i = 0, j = punct2 - punct1; i < 3; i++,j++) {
+		if (isdigit(input[j]))
+			month[i] = input[j];
+		else month[i] ='\0';
+	}
+	for (int i = 0, j = length - punct2-1; i < 5; i++,j++) {
+		if (isdigit(input[j]))
+			year[i] = input[j];
+		else year[i]='\0';
+	}
+	temp.day = (int)decimalConverter(day);
+	temp.month = (int)decimalConverter(month);
+	temp.year = (int)decimalConverter(year);
+
+	return temp;
+}
+
 int checkDate(Date date) {
 	SYSTEMTIME t;
 	GetLocalTime(&t);
@@ -322,16 +358,6 @@ void cleanEndingSpace(char input[]) {
 		input[--length] = '\0';
 	}
 }
-//void cleanSpaceBetween(char input[]) {
-//	char buffer[STRSIZE];
-//	int j = 0, length = strlen(input);
-//	for (int i = 0; i < length; i++) {
-//		if (!isspace(input))
-//			buffer[j++] = input[i];
-//		else
-//			break;
-//	}
-//}
 
 int checkFormatFor(const char type[], char input[]) {
 
@@ -384,13 +410,40 @@ int checkFormatFor(const char type[], char input[]) {
 				continue;
 			else if (input[k] == '.' && dot == 0)
 				dot++;
-			else
-				return 0;
+			else return 0;
 		}
 		return 1;
 	}
-	else
-		return 0;
+	else if (strcmp(type, DATE) == 0) {
+		if (length < 8 || length > 10)
+			return 0;
+		int punct = 0;
+		do {
+			if (isdigit(input[i])) {
+				i++;
+				if (isdigit(input[i])) {
+					i++;
+					if (input[i] == '/' || input[i] == '-' || input[i] == ' ' || input[i] == '.') {
+						i++;
+						punct++;
+					}
+					else return 0;
+				}
+				else if (input[i] == '/' || input[i] == '-' || input[i] == ' ' || input[i] == '.') {
+					i++;
+					punct++;
+				}
+				else return 0;
+			}
+			else return 0;
+			if (i > 6 && punct < 2)
+				return 0;
+		} while (punct < 2);
+		if (isdigit(input[i]) && isdigit(input[i + 1]) && isdigit(input[i + 2]) && isdigit(input[i + 3]))
+			return 1;
+		else return 0;
+	}
+	else return 0;
 }
 
 double promptPrice(char question[]) {
@@ -415,8 +468,7 @@ int promptQty(char question[]) {
 void addStock(StockInfo stock[], int* size) {
 	StockInfo temp;
 	int index, invalidBuffer;
-	do {
-		CLS;
+	do { CLS
 		if (*size < MAX_STOCK_SIZE) {
 			do {
 				promptID(temp.prodID, "Enter Product ID (X to EXIT) > ");
@@ -451,14 +503,12 @@ void addStock(StockInfo stock[], int* size) {
 				savedMsg();
 				break;
 			case 0:
-				notSavedMsg();
-				break;
+				notSavedMsg(); break;
 			}
 		}
 		else {
 			stockFullMsg();
-			PAUSE;
-			return;
+			PAUSE return;
 		}
 	} while (promptYesNo("Continue to add (Y/N)? > "));
 }
@@ -510,14 +560,13 @@ void saveCurrentTime(Time* time) {
 void searchStock(StockInfo stock[], int* size) {
 	char buffer[STRSIZE];
 	int index, opt;
-	do {
-		CLS;
+	do { CLS
 		searchStockMenu();
 		do {
 			opt = promptInteger("Option: ");
 			switch (opt) {
 			case 1:
-				CLS;
+				CLS
 				promptID(buffer, "Enter Product ID (X - BACK) > ");
 				index = checkExistedID(buffer, stock, size);
 				if (strcmp(buffer, "X") == 0)
@@ -528,7 +577,7 @@ void searchStock(StockInfo stock[], int* size) {
 					displaySingleStock(&stock[index]);
 				break;
 			case 2:
-				CLS;
+				CLS
 				promptName(buffer, "Enter Product Name (X - BACK) > ");
 				index = checkExistedName(buffer, stock, size);
 				if (strcmp(buffer, "X") == 0)
@@ -550,18 +599,17 @@ void searchStock(StockInfo stock[], int* size) {
 
 void displayStock(StockInfo stock[], int* size) {
 	int opt;
-	do {
-		CLS;
+	do { CLS
 		displayStockMenu();
 		do {
 			opt = promptInteger("Option: ");
 			switch (opt) {
 			case 1:
-				CLS;
+				CLS
 				displayAllStock(stock, size); 
 				break;
 			case 2:
-				CLS;
+				CLS
 				sortByID(stock, size); 
 				break;
 			case 3:
@@ -626,21 +674,18 @@ void modifyStock(StockInfo stock[], int* size) {
 	int index, newIndex;
 	char buffer[STRSIZE];
 	StockInfo temp;
-	do {
-		CLS;
+	do { CLS
 		promptID(buffer, "Enter Product ID (X - BACK) > ");
 		index = checkExistedID(buffer, stock, size);
 		if (strcmp(buffer, "X") == 0)
 			return;
 		if (index == -1) {
 			noRecordMsg(); 
-			PAUSE;
-			continue;
+			PAUSE continue;
 		}
 		else {
 			displaySingleStock(&stock[index]); PAUSE
 		}
-
 		switch (promptYesNo("Want to modify (Y/N)? > ")) {
 		case 1:
 			do {
@@ -699,10 +744,9 @@ void modifyStock(StockInfo stock[], int* size) {
 				savedMsg();
 				break;
 			case 0:
-				notSavedMsg();
-				break;
+				notSavedMsg(); break;
 			}
-			PAUSE;
+			PAUSE
 			break;
 		case 0:
 			return;
@@ -715,18 +759,17 @@ void modifyStock(StockInfo stock[], int* size) {
 void deleteStock(StockInfo stock[], int* size) {
 	char buffer[STRSIZE];
 	int index;
-	do {
-		CLS;
+	do { CLS
 		promptID(buffer, "Enter Product ID to Delete (X - BACK) > ");
 		index = checkExistedID(buffer, stock, size);
 		if (strcmp(buffer, "X") == 0)
 			return;
 		else if (index == -1) {
-			noRecordMsg();
+			noRecordMsg();  
 		}
 		else {
-			displaySingleStock(&stock[index]);
-			switch (promptYesNo("Confirm to delete (Y/N)? > ")) {
+			displaySingleStock(&stock[index]); PAUSE
+			switch (promptYesNo("Want to delete (Y/N)? > ")) {
 			case 1:
 				*size -= 1;
 				for (index; index < *size; index++) {
@@ -744,8 +787,7 @@ void deleteStock(StockInfo stock[], int* size) {
 
 void stockReport(StockInfo stock[], int* size) {
 	int opt;
-	do {
-		CLS;
+	do { CLS
 		stockReportMenu();
 		do {
 			opt = promptInteger("Option: ");
