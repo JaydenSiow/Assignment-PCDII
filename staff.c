@@ -130,13 +130,13 @@ void checkStaffGender(int gender, char* staffGender, int* validation) {
         *staffGender = 'F';
         *validation = 0;
     }
-    else {
+    else{
         printf("\nPlease enter a valid number (1-2)!\n");
         *validation = 1;
     }
 }
 
-void checkStaffPosition(int position, char(*staffPosition), int* validation) {
+void checkStaffPosition(int position, char (*staffPosition), int* validation) {
     if (position == 1) {
         strcpy(staffPosition, "ADMINISTRATOR");
         *validation = 0;
@@ -233,7 +233,7 @@ void displayCertainStaff(Staff staff[], int staffCount, char staffID[], char sta
         if (strcmp(staffID, staff[i].staffID) == 0 || strcmp(staffName, staff[i].name) == 0 || day == staff[i].birthDate.day || month == staff[i].birthDate.month || year == staff[i].birthDate.year ||
             gender == staff[i].gender || strcmp(position, staff[i].position) == 0) {
             printf("%s%-3d|%-10s|%-25s|%-2s%02d/%02d/%-4d%-2s|%-3s%c%-4s|%-13s|\n", "|", no, staff[i].staffID, staff[i].name, " ", staff[i].birthDate.day, staff[i].birthDate.month,
-                staff[i].birthDate.year, " ", " ", staff[i].gender, " ", staff[i].position);
+            staff[i].birthDate.year, " ", " ", staff[i].gender, " ", staff[i].position);
             no++;
         }
     }
@@ -439,14 +439,14 @@ void StaffSearch() {
     } while (continueSearch == 'Y');
 }
 
-void searchByAttr(int choice) {
+void searchByAttr(int choice){
     Staff staff[MAX_STAFF];
     Staff getAttr;
     int validation, staffCount;
     readStaffFile(staff, &staffCount);
 
     if (choice == 1) {
-        do {
+        do{
             printf("\nEnter staff ID to search (Eg: AB123, E = Exit to Staff Menu): ");
             getStaffID(&getAttr);
             checkStaffID(getAttr.staffID, &validation, &getAttr.staffID);
@@ -648,7 +648,7 @@ void StaffModify() {
                                 strcpy(staff[i].password, modifyAttr.password);
                             }
                             else if (strcmp(modifyAttr.password, "-1") == 0)
-                                return;
+                                StaffMenu();
                             else {
                                 printf("Incorrect password!\n");
                                 validation = 1;
@@ -668,7 +668,7 @@ void StaffModify() {
                                 strcpy(staff[i].recovery, modifyAttr.recovery);
                             }
                             else if (strcmp(modifyAttr.recovery, "-1") == 0)
-                                return;
+                                StaffMenu();
                             else {
                                 printf("Incorrect password recovery!\n");
                                 validation = 1;
@@ -676,7 +676,7 @@ void StaffModify() {
                         } while (validation);
                     }
                     else if (attribute == 8)
-                        return;
+                        StaffMenu();
                     printf("\nStaff details modified successfully!\n");
                     break;
                 }
