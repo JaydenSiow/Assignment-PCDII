@@ -5,7 +5,9 @@
 #include "staff_declaration.h"
 #pragma warning(disable:4996)
 
-//Menu function
+#define MAXCHAR_INPUT 15
+
+//Staff Menu function
 void StaffMenu();
 
 //Main function
@@ -17,7 +19,7 @@ void main() {
 //XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX Staff Module XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void StaffMenu() {
     int choice;
-    char input[10];
+    char input[MAXCHAR_INPUT];
 
     do {
         printf("\nOperation lists:\n");
@@ -82,7 +84,7 @@ void checkStaffID(char staffID[], int* validation, char(*validatedID)[]) {
         }
     }
     else if (strcmp(staffID, "E") == 0 || strcmp(staffID, "e") == 0) {
-        StaffMenu();
+        *validation = 2;
     }
     else {
         printf("Please enter the staff ID according to the format given\n");
@@ -130,13 +132,13 @@ void checkStaffGender(int gender, char* staffGender, int* validation) {
         *staffGender = 'F';
         *validation = 0;
     }
-    else{
+    else {
         printf("\nPlease enter a valid number (1-2)!\n");
         *validation = 1;
     }
 }
 
-void checkStaffPosition(int position, char (*staffPosition), int* validation) {
+void checkStaffPosition(int position, char(*staffPosition), int* validation) {
     if (position == 1) {
         strcpy(staffPosition, "ADMINISTRATOR");
         *validation = 0;
@@ -173,10 +175,6 @@ int checkNumber(char input[]) {
 int checkDecision(char yesNo) {
     if (yesNo == 'Y' || yesNo == 'N')
         return 0;
-    else if (yesNo == 'E') {
-        printf("\nProgram exited successfully!!!\n");
-        exit(-1);
-    }
     else {
         printf("Invalid operation!!! Please re-enter a valid character\n\n");
         return 1;
@@ -233,7 +231,7 @@ void displayCertainStaff(Staff staff[], int staffCount, char staffID[], char sta
         if (strcmp(staffID, staff[i].staffID) == 0 || strcmp(staffName, staff[i].name) == 0 || day == staff[i].birthDate.day || month == staff[i].birthDate.month || year == staff[i].birthDate.year ||
             gender == staff[i].gender || strcmp(position, staff[i].position) == 0) {
             printf("%s%-3d|%-10s|%-25s|%-2s%02d/%02d/%-4d%-2s|%-3s%c%-4s|%-13s|\n", "|", no, staff[i].staffID, staff[i].name, " ", staff[i].birthDate.day, staff[i].birthDate.month,
-            staff[i].birthDate.year, " ", " ", staff[i].gender, " ", staff[i].position);
+                staff[i].birthDate.year, " ", " ", staff[i].gender, " ", staff[i].position);
             no++;
         }
     }
@@ -275,7 +273,7 @@ char* getStaffName(Staff* staff) {
 }
 
 void getStaffBirth(Staff* staff, int* day, int* month, int* year) {
-    char input[12];
+    char input[MAXCHAR_INPUT];
     int validFormat = 0;
 
     do {
@@ -294,7 +292,7 @@ void getStaffBirth(Staff* staff, int* day, int* month, int* year) {
 }
 
 int getGenderAndPosition() {
-    char input[15], attribute;
+    char input[MAXCHAR_INPUT], attribute;
     rewind(stdin);
     scanf(" %s", input);
     attribute = checkNumber(input);
@@ -317,7 +315,7 @@ char* getStaffRecovery(Staff* staff) {
 
 char getDecision() {
     char continueAdd;
-    printf("\nContinue? (Y = Yes, N = Exit to Main Program, E = Exit Whole Program): ");
+    printf("\nContinue? (Y = Yes, N = Exit Back to Staff Module): ");
     rewind(stdin);
     scanf(" %c", &continueAdd);
     return continueAdd;
@@ -326,7 +324,7 @@ char getDecision() {
 //----------------------------------------------Add Staff----------------------------------------------
 void StaffAdd() {
     Staff staff;
-    char continueAdd, input[10];
+    char continueAdd, input[MAXCHAR_INPUT];
     int validation, duplicateID;
 
     do {
@@ -336,6 +334,9 @@ void StaffAdd() {
             getStaffID(&staff);
             checkStaffID(staff.staffID, &validation, &staff.staffID);
             duplicateID = checkStaffIDExist(staff.staffID);
+            if (validation == 2)
+                return;
+
             if (duplicateID)
                 printf("Staff ID already exist!!! Enter a new staff ID\n");
         } while (validation || duplicateID);
@@ -405,7 +406,7 @@ void saveStaff(Staff staff) {
 //--------------------------------------------Search Staff--------------------------------------------
 void StaffSearch() {
     int choice, validation;
-    char input[10], continueSearch;
+    char input[MAXCHAR_INPUT], continueSearch;
 
     do {
         system("cls");
@@ -427,6 +428,8 @@ void StaffSearch() {
             if (choice < 1 || choice > 6) {
                 printf("Invalid input. Please try again.\n\n");
             }
+            else if (choice == 6)
+                return;
             else {
                 searchByAttr(choice);
                 do {
@@ -439,17 +442,19 @@ void StaffSearch() {
     } while (continueSearch == 'Y');
 }
 
-void searchByAttr(int choice){
+void searchByAttr(int choice) {
     Staff staff[MAX_STAFF];
     Staff getAttr;
     int validation, staffCount;
     readStaffFile(staff, &staffCount);
 
     if (choice == 1) {
-        do{
+        do {
             printf("\nEnter staff ID to search (Eg: AB123, E = Exit to Staff Menu): ");
             getStaffID(&getAttr);
             checkStaffID(getAttr.staffID, &validation, &getAttr.staffID);
+            if (validation == 2)
+                return;
         } while (validation);
         if (checkStaffIDExist(getAttr.staffID)) {
             displayCertainStaff(staff, staffCount, getAttr.staffID, "void", 0, 0, 0, 'X', "void");
@@ -475,7 +480,7 @@ void searchByAttr(int choice){
         }
     }
     else if (choice == 3) {
-        char input[10];
+        char input[MAXCHAR_INPUT];
         int date;
         printf("\nSearch by:\n");
         printf("1. Day\n");
@@ -547,8 +552,6 @@ void searchByAttr(int choice){
 
         displayCertainStaff(staff, staffCount, "void", "void", 0, 0, 0, 'X', getAttr.position);
     }
-    else if (choice == 6)
-        StaffMenu();
     else
         printf("Invalid input!!! Please try again\n\n");
 }
@@ -567,6 +570,8 @@ void StaffModify() {
             printf("\nEnter staff ID to modify (Eg: AB123, E = Exit to Staff Menu): ");
             getStaffID(&modifyAttr);
             checkStaffID(modifyAttr.staffID, &validation, &modifyAttr.staffID);
+            if (validation == 2)
+                return;
         } while (validation);
 
         if (checkStaffIDExist(modifyAttr.staffID)) {
@@ -581,6 +586,9 @@ void StaffModify() {
                             getStaffID(&modifyAttr);
                             checkStaffID(modifyAttr.staffID, &validation, &modifyAttr.staffID);
                             duplicateID = checkStaffIDExist(modifyAttr.staffID);
+                            if (validation == 2)
+                                return;
+
                             if (strcmp(staff[i].staffID, modifyAttr.staffID) == 0)
                                 printf("Staff ID before and after modifying are the same! Try enter a new Staff ID\n");
                             else if (duplicateID)
@@ -648,7 +656,7 @@ void StaffModify() {
                                 strcpy(staff[i].password, modifyAttr.password);
                             }
                             else if (strcmp(modifyAttr.password, "-1") == 0)
-                                StaffMenu();
+                                return;
                             else {
                                 printf("Incorrect password!\n");
                                 validation = 1;
@@ -668,7 +676,7 @@ void StaffModify() {
                                 strcpy(staff[i].recovery, modifyAttr.recovery);
                             }
                             else if (strcmp(modifyAttr.recovery, "-1") == 0)
-                                StaffMenu();
+                                return;
                             else {
                                 printf("Incorrect password recovery!\n");
                                 validation = 1;
@@ -676,7 +684,7 @@ void StaffModify() {
                         } while (validation);
                     }
                     else if (attribute == 8)
-                        StaffMenu();
+                        return;
                     printf("\nStaff details modified successfully!\n");
                     break;
                 }
@@ -695,7 +703,7 @@ void StaffModify() {
 }
 
 int selectAttr() {
-    char input[10];
+    char input[MAXCHAR_INPUT];
     int attribute;
     printf("Attributes that can be modified:\n");
     printf("1. Staff ID\n");
@@ -736,6 +744,8 @@ void StaffDelete() {
             printf("\nEnter Staff ID to delete the staff information (Eg: AB123, E = Exit to Staff Menu): ");
             getStaffID(&staffToDelete);
             checkStaffID(staffToDelete.staffID, &validation, &staffToDelete.staffID);
+            if (validation == 2)
+                return;
         } while (validation);
 
         if (checkStaffIDExist(staffToDelete.staffID)) {
@@ -790,6 +800,9 @@ void StaffLogin() {
             getStaffID(&login);
             checkStaffID(login.staffID, &validation, &login.staffID);
             existence = checkStaffIDExist(login.staffID);
+            if (validation == 2)
+                return;
+
             if (existence == 0 && validation == 0)
                 printf("Staff with Staff ID %s does not exist\n", login.staffID);
         } while (existence == 0 || validation);
