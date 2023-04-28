@@ -1,22 +1,26 @@
 #pragma once
 #define STAFF_FILE "staff.txt"
 #define MAX_STAFF 50
+#define MAXCHAR_STAFF_ID 6
+#define MAXCHAR_STAFF_NAME 25
+#define MAXCHAR_STAFF_POSITION 15
+#define MAXCHAR_PASSWORD 25
 
 typedef struct {
     int day, month, year;
 }Date;
 
 typedef struct {
-    char staffID[6];
-    char name[25];
+    char staffID[MAXCHAR_STAFF_ID];
+    char name[MAXCHAR_STAFF_NAME];
     Date birthDate;
     char gender;
-    char position[15];
-    char password[25];
-    char recovery[25];
+    char position[MAXCHAR_STAFF_POSITION];
+    char password[MAXCHAR_PASSWORD];
+    char recovery[MAXCHAR_PASSWORD];
 }Staff;
 
-//Validations
+//Validation
 void checkStaffID(char[], int*, char(*)[]);
 int checkStaffName(char[]);
 int checkBirthDate(int, int, int);
@@ -49,9 +53,9 @@ void StaffLogin();
 
 //Functions used by multiple modules
 int checkStaffIDExist(char[]);
-void readStaffFile(Staff staff[], int*);
-void writeStaffFile(Staff staff[], int);
-void displayAllStaff(Staff staff[], int);
+void readStaffFile(Staff staff[], int*);           //used in all module except add module
+void writeStaffFile(Staff staff[], int);           //used in modify and delete module
+void displayAllStaff(Staff staff[], int);          //used in search, modify and display module
 
 //Function used to prompt data input
 char* getStaffID(Staff* staff);
