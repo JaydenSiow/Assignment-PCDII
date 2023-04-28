@@ -75,7 +75,7 @@ void main() {
     StaffMenu();
 }
 
-//--------------------------------------------Main Menu--------------------------------------------
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX Staff Module XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 void StaffMenu() {
     int choice;
     char input[10];
@@ -124,7 +124,7 @@ void StaffMenu() {
     } while (choice != 7);
 }
 
-//--------------------------------------------Validation--------------------------------------------
+//--------------------------------------------Validations--------------------------------------------
 void checkStaffID(char staffID[], int* validation, char(*validatedID)[]) {
     if (strlen(staffID) == 5) {
         if (isalpha(staffID[0]) == 0 || isalpha(staffID[1]) == 0 || isdigit(staffID[2]) == 0 || isdigit(staffID[3]) == 0 || isdigit(staffID[4]) == 0) {
@@ -899,3 +899,5 @@ void StaffLogin() {
         } while (loginSuccess);
     } while (changeID);
 }
+
+//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX End of Staff Module XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
