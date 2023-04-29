@@ -5,18 +5,51 @@
 #define FILE_CLOSE fclose(salesFile)
 #include "Stock Declarations.h"
 
+/*A001, Vitalite Vitamin A, 51.50, 75.00, 120, 20, 24 - 4 - 2023, 16:10
+A002, Vitalite Vitamin B, 45.00, 69.99, 120, 50, 24 - 4 - 2023, 16 : 11
+A003, Vitalite Vitamin C, 59.50, 75.50, 200, 50, 24 - 4 - 2023, 16 : 11
+C001, Calcium Magnesium Tablet, 65.50, 82.00, 100, 50, 24 - 4 - 2023, 16 : 13
+B001, Baiyes Calcium, 20.99, 45.50, 200, 50, 25 - 4 - 2023, 12 : 0
+*/
+
 typedef struct {
 	char salesID[10];
-	char itemName[15];
+	char itemName[60];
 	int itemQuantity;
-	char paymentMethod[30];
-	char creditCardDetails[30];
 	double salesTax;
 	double salesTotal;
 	Date salesDate;
+	char memberId[5];
 }SalesRecord;
 
-void deleteRecord(SalesRecord* salesRecords, int indexOfRecord, int numberOfRecordsInFile);
+void deleteSearchedRecords(SalesRecord* salesRecords, int numberOfRecordsInFile, int indexOfSearchedRecords[], int numberOfSearchedRecords);
+int searchByID(char input[], char salesID[]);
+int searchForDate(SalesRecord* inputDate, SalesRecord* salesRecord);
+int searchForProduct(char input[], char itemName[]);
+void searchByCondition(SalesRecord* salesRecords, int numberOfRecordsInFile, int* numberOfSearchedRecords, int indexOfSearchedRecords[], int whichSet, void(*obtainDataFunction)(), int (*setConditionFunction)());
+
+int searchARecord(SalesRecord* salesRecords, int numberOfRecordsInFile, int* numberOfSearchedRecords, int indexOfSearchedRecords[]);
+void nothingMenu();
+void searchSelectionMenu(SalesRecord* salesRecords, int indexOfSearchedRecords[], int numberOfSearchedRecords);
+void searchSelection(SalesRecord* salesRecords, int indexOfSearchedRecords[], int numberOfSearchedRecords, void (*modifyOrDelete)(), int whichMenu);
+void searchRecords(SalesRecord* salesRecords, int numberOfRecordsInFile, int* numberOfSearchedRecords, int indexOfSearchedRecords[]);
+void searchMenu();
+void deleteSelectionMenu(SalesRecord* salesRecords, int indexOfSearchedRecords[], int numberOfSearchedRecords);
+void sortRecordsByName(SalesRecord* salesRecords, int numberOfRecordsInFile);
+void sortRecordsByDate(SalesRecord* salesRecords, int numberOfRecordsInFile);
+
+void displayRecords(SalesRecord* salesRecords, int numberOfRecordsInFile);
+void displayByName(SalesRecord salesRecords[], int numberOfRecordsInFile);
+void displayByDate(SalesRecord* salesRecords, int numberOfRecordsInFile);
+void displayMenu();
+
+
+
+
+void salesPerformanceReport(SalesRecord* salesRecords, int numberOfSalesRecords);
+int obtainProductQuantity(SalesRecord* salesRecord, StockInfo* stock, int index, int size);
+int obtainProductName(SalesRecord* salesRecord, StockInfo* stock, int size);
+void deleteRecord(SalesRecord* salesRecords, int indexOfRecord);
 char yesOrNoFunction(const char enquiry[]);
 void deleteARecord(SalesRecord* salesRecords, int numberOfRecordsInFile);
 char loopMainFunctions(void (*functions[])(), int option);
@@ -40,7 +73,7 @@ int obtainOptionFor(int whichMenu, int lowerLimit, int upperLimit);
 void mainMenuDesign();
 
 //Auto-Generation of SalesID
-void generateSalesId(SalesRecord *salesRecord);
+void generateSalesId(SalesRecord* salesRecord);
 
 //Table of Displaying Sales Records
 void tableHeaderForDisplayingSalesRecords();
@@ -51,31 +84,26 @@ void displayRecordsOrRecord(SalesRecord line[], int loopCount);
 int obtainSalesRecordsFromFile(SalesRecord* salesRecords);
 
 //Search For Specific Record In File
-int searchARecord(SalesRecord* salesRecords, int numberOfRecordsInFile);
 
 //Add A Record Into the File
 void addARecord();
 
 //Obtain Sales Data For Adding A Record or Modifying One
 void obtainDate(SalesRecord* salesRecord);
-void obtainQuantity(SalesRecord* salesRecord);
-void obtainPaymentMethod(SalesRecord* salesRecord);
-void obtainCreditCardDetails(SalesRecord* salesRecord);
+
 
 //Modification Module
-void modifyARecord(SalesRecord* salesRecords, int numberOfRecordsInFile);
-void dataModifyMenu(SalesRecord* row);
+void dataModifyMenu(SalesRecord* salesRecord);
 void dataModificationMenu();
 
 //Validation Of the Sales Data Entered By User
-int validateIfIsValidDate(Date *dateOfSale);
+int validateIfIsValidDate(Date* dateOfSale);
 
 //Lower Levels of Abstraction
 void trigger(void (*solicit)(), char* solicitedData);
 void promptForSalesID();
 int findRecordAndReturnIndex(char* searchedID, SalesRecord* line, int numberOfRecordsInFile);
 void recordNotFoundMessage();
-void modifyRecordData(SalesRecord* salesRecords, int indexOfRecordInFile, int numberOfRecordsInFile);
 void obtainDetailsOfNewRecord(SalesRecord* newRecord);
 void writeNewRecordIntoFile(SalesRecord* newRecord);
 
