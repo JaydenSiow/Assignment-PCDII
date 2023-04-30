@@ -115,11 +115,11 @@ void dataModificationMenu() {
 
 
 void tableHeaderForDisplayingSalesRecords() {
-	printf("\n============================================================================================================\n");
-	printf("%s%56s%51s\n", "|", "SALES RECORDS", "|");
-	printf("============================================================================================================\n");
-	printf("| %-4s | %-30s | %-2s | %-8s | %8s %4s %7s %4s %7s |\n", "Sales ID", "Product", "Quantity", "Tax (6.6%)", "Total", "|", "Date", "|", "Member ID");
-	printf("+==========+================================+==========+============+=============+============+===========+\n");
+	printf("\n======================================================================================================================\n");
+	printf("%s%66s%51s\n", "|", "SALES RECORDS", "|");
+	printf("======================================================================================================================\n");
+	printf("| %-4s | %17s %14s %-2s | %12s %3s %11s %7s %7s %4s %7s |\n", "Sales ID", "Product","|", "Quantity", "Tax (6.6%)","|", "Total", "|", "Date", "|", "Member ID");
+	printf("+==========+================================+==========+================+===================+============+===========+\n");
 }
 
 
@@ -203,6 +203,7 @@ int obtainOptionFor(int whichMenu, int lowerLimit, int upperLimit) {
 
 char yesOrNoFunction(const char enquiry[]) {
 	char yesNo;
+	rewind(stdin);
 	printf("\n%s (Y-Yes N-No)? > ", enquiry);
 	while ((yesNo = toupper(getchar())) != 'N' && yesNo != 'Y') {
 		rewind(stdin);
@@ -244,8 +245,11 @@ void displayRecordsOrRecord(SalesRecord salesRecords[], int loopCount) {
 }
 
 void displayRecord(SalesRecord* salesRecord) {
-	printf("| %6s %3s %-30s | %4d %5s %4s%.2f %3s %4s%-7.2f %s %02d/%02d/%-4d | %7s %3s\n", salesRecord->salesID, "|", salesRecord->itemName, salesRecord->itemQuantity, "|", "$", salesRecord->salesTax, "|", "$", salesRecord->salesTotal, "|", salesRecord->salesDate.day, salesRecord->salesDate.month, salesRecord->salesDate.year, salesRecord->memberId, "|");
-	printf("+==========+================================+==========+============+=============+============+===========+\n");
+	StockInfo stock[MAX_STOCK_SIZE];
+	int size = 0;
+	readStockFile(stock, &size);
+	printf("| %6s %3s %s%-29s | %5d %4s %4s%-8.2f %3s %6s%-11.2f %s %02d/%02d/%-4d | %7s %3s\n", salesRecord->salesID, "|", (checkExistedName(salesRecord->itemName, stock, &size) < 0) ? ("*") : (" "), salesRecord->itemName, salesRecord->itemQuantity, "|", "$", salesRecord->salesTax, "|", "$", salesRecord->salesTotal, "|", salesRecord->salesDate.day, salesRecord->salesDate.month, salesRecord->salesDate.year, salesRecord->memberId, "|");
+	printf("+==========+================================+==========+================+===================+============+===========+\n");
 }
 
 void sortBySalesID(SalesRecord* salesRecords, int numberOfRecordsInFile) {
@@ -350,17 +354,22 @@ void dataModifyMenu(SalesRecord* salesRecord) {
 	Members members[MAX_MEMBER];
 	Members singleMember;
 	strcpy(singleMember.mID, salesRecord->memberId);
-	int oldMemberIndex = mChkRedundancy(&singleMember);
-	int newMemberIndex = oldMemberIndex;
+	int oldMemberIndex = mChkRedundancy(&singleMember);//Old Member Index = 2
+	int newMemberIndex;
+	--oldMemberIndex;//Old member index = 1
 	int numberOfMemberRecords = rData(members);
 	int size = 0;
+	char storeOldStatus[50];
+	newMemberIndex = 0;
+	strcpy(storeOldStatus, members[oldMemberIndex].mStatus);
+	char storeAnotherStatus[50];
 	readStockFile(stock, &size);
 	int index = checkExistedName(salesRecord->itemName, stock, &size);//Obtain Index of Name In Stock File
 	int newIndex = index;//Assign Index to New Index 
 	Menu option;
 	int (*modifyFunctions[5])(SalesRecord*) = { obtainProductName, obtainProductQuantity, obtainDate, promptMemberIDForDataModify };
 	while ((option = obtainOptionFor(1, 1, 5)) != 5) {
-		(--option) == 0 ? (newIndex = modifyFunctions[option](salesRecord, stock, size)) : (option == 4) ? modifyFunctions[option](salesRecord, &newMemberIndex) : (modifyFunctions[option](salesRecord, stock, index, size));//Update New Index Every Iteration
+		(--option) == 0 ? (newIndex = modifyFunctions[option](salesRecord, stock, size)) : (option == 3) ? modifyFunctions[option](salesRecord, &newMemberIndex) : (modifyFunctions[option](salesRecord, stock, index, size));//Update New Index Every Iteration
 		if (newIndex != index) {//If the New Name is not Equal to the Old Name 
 			stock[newIndex].qtyInStock -= salesRecord->itemQuantity;// Minus the Quantity of the New Name In Stock
 			stock[index].qtyInStock += salesRecord->itemQuantity;// Plus the Quantity of the Old Name In Stock
@@ -369,47 +378,35 @@ void dataModifyMenu(SalesRecord* salesRecord) {
 				modifyFunctions[1](salesRecord, stock, index, size);//Enter the New Quantity
 			};
 		}
-		if (newMemberIndex != oldMemberIndex) {
+		if (option == 1 || option == 0) {
+			members[oldMemberIndex].mTotalSales -= salesRecord->salesTotal;
+			salesRecord->salesTax = stock[index].sellPrice * salesRecord->itemQuantity * 0.066;
+			salesRecord->salesTotal = stock[index].sellPrice * salesRecord->itemQuantity + salesRecord->salesTax;
+			members[oldMemberIndex].mTotalSales += salesRecord->salesTotal;
+			if (!compareStockBetween(stock[index].minLvl, (stock[index].qtyInStock))) {// If the Quantity in Stock is Below Min Lvl
+				modifyFunctions[1](salesRecord, stock, index, size);//Enter the New Quantity
+			};
+		}
+		if ((newMemberIndex - 1) != oldMemberIndex && option == 3) {
+			strcpy(storeAnotherStatus, members[--newMemberIndex].mStatus);
 			members[newMemberIndex].mTotalSales += salesRecord->salesTotal;
 			members[oldMemberIndex].mTotalSales -= salesRecord->salesTotal;
+			updateMemberStatus(&members[oldMemberIndex]);
+			updateMemberStatus(&members[newMemberIndex]);
+			if (strcmp(storeOldStatus, members[oldMemberIndex].mStatus)) {
+				strcpy(storeOldStatus, members[oldMemberIndex].mStatus);
+				printf("\nOops! %s %s Is Demoted To A %s Member!\n", members[oldMemberIndex].mName, members[oldMemberIndex].mID, members[oldMemberIndex].mStatus);
+			}
+			if (strcmp(storeAnotherStatus, members[newMemberIndex].mStatus)) {
+				printf("\nCongratulations! %s %s Is Now A %s Member!\n", members[newMemberIndex].mName, members[newMemberIndex].mID, members[newMemberIndex].mStatus);
+			}
+
 			oldMemberIndex = newMemberIndex;
 		}
 		writeStockFile(stock, &size);
-		updateMemberStatus(&members[newMemberIndex]);
 		wData(members, numberOfMemberRecords);
 		writeStockFile(stock, &size);
 	}
-	/*StockInfo stock[MAX_STOCK_SIZE];
-	Members members[MAX_MEMBER];
-	Members singleMember;
-	int size = 0;
-	strcpy(singleMember.mID, salesRecord->memberId);
-	int oldMemberIndex = mChkRedundancy(&singleMember);
-	int newMemberIndex = oldMemberIndex;
-	readStockFile(stock, &size);
-	int numberOfMemberRecords = rData(members);
-	int index = checkExistedName(salesRecord->itemName, stock, &size);//Obtain Index of Name In Stock File
-	int newIndex = index;//Assign Index to New Index 
-	Menu option;
-	int (*modifyFunctions[5])(SalesRecord*) = { obtainProductName, obtainProductQuantity, obtainDate };//Obtain MemberID Function
-	while ((option = obtainOptionFor(1, 1, 5)) != 5) {
-		(--option) == 0 ? (newIndex = modifyFunctions[option](salesRecord, stock, size)) : (modifyFunctions[option](salesRecord, stock, index, size));//Update New Index Every Iteration
-		if (newIndex != index) {//If the New Name is not Equal to the Old Name 
-			stock[newIndex].qtyInStock -= salesRecord->itemQuantity;// Minus the Quantity of the New Name In Stock
-			stock[index].qtyInStock += salesRecord->itemQuantity;// Plus the Quantity of the Old Name In Stock
-			index = newIndex;//Assign the New Index as the Old Index
-			if (!compareStockBetween(stock[index].minLvl, (stock[index].qtyInStock))) {// If the Quantity in Stock is Below Min Lvl
-				modifyFunctions[1](salesRecord, stock, index, size);//Enter the New Quantity
-			};
-		}*/
-/*		if (newMemberIndex != oldMemberIndex) {
-			members[newMemberIndex].mTotalSales += salesRecord->salesTotal;
-			members[oldMemberIndex].mTotalSales -= salesRecord->salesTotal;
-			oldMemberIndex = newMemberIndex;
-		}
-		writeStockFile(stock, &size);
-		updateMemberStatus(&members[newMemberIndex]);
-		wData(members, numberOfMemberRecords);*/
 }
 
 int promptMemberIDForDataModify(SalesRecord *salesRecord, int *newIndex) {
@@ -421,7 +418,6 @@ int promptMemberIDForDataModify(SalesRecord *salesRecord, int *newIndex) {
 		rewind(stdin);
 		strcpy(singleM.mID, salesRecord->memberId);
 	} while ((*newIndex = mChkRedundancy(&singleM)) == 0);
-	
 }
 
 void updateMemberStatus(Members* member) {
@@ -442,7 +438,7 @@ void updateMemberStatus(Members* member) {
 int obtainProductQuantity(SalesRecord* salesRecord, StockInfo* stock, int index, int size) {
 	int tempQty;
 	do {
-		tempQty = promptQty("Enter Product Quantity  > ");
+		tempQty = promptQty("\nEnter Product Quantity  > ");
 	} while (!compareStockBetween(stock[index].minLvl, (stock[index].qtyInStock - (tempQty - salesRecord->itemQuantity))));
 	stock[index].qtyInStock -= (tempQty - salesRecord->itemQuantity);//110
 	salesRecord->itemQuantity = tempQty;//10
@@ -452,7 +448,7 @@ int obtainProductName(SalesRecord* salesRecord, StockInfo* stock, int size) {
 	char buffer[50];
 	int index;
 	do {
-		promptName(buffer, "Enter Product Name > ");
+		promptName(buffer, "\nEnter Product Name > ");
 	} while ((index = checkExistedName(buffer, stock, &size)) < 0);
 	strcpy(salesRecord->itemName, stock[index].prodName);
 	return index;
@@ -516,6 +512,7 @@ void recordNotFoundMessage() {
 void writeNewRecordIntoFile(SalesRecord* newRecord) {
 	if (yesOrNoFunction("Confirm Addition") == 'N')
 		return 0;
+	printf("\nRecord Successfully Added\n");
 	FILE* salesFile = openFileFor(APPENDING);
 	fwrite(newRecord, sizeof(SalesRecord), 1, salesFile);
 	FILE_CLOSE;
@@ -537,16 +534,22 @@ void obtainDetailsOfNewRecord(SalesRecord* newRecord) {
 	int size = 0;
 	int memberIndex;
 	int numberOfRecordsInMemberFile = rData(members);
-	int stockIndex = obtainProductName(newRecord, stock, size);
-	newRecord->itemQuantity = NULL;
 	readStockFile(stock, &size);
+	int stockIndex = obtainProductName(newRecord, stock, size);
+	char storeOldStatus[20];
+	newRecord->itemQuantity = NULL;
 	generateSalesId(newRecord);
-	obtainProductQuantity(newRecord, stock, stockIndex, size);
+	do {
+		obtainProductQuantity(newRecord, stock, stockIndex, size);
+	} while (!compareStockBetween(stock[stockIndex].minLvl, (stock[stockIndex].qtyInStock)));
 	promptMemberIDForDataModify(newRecord, &memberIndex);
+	strcpy(storeOldStatus, members[--memberIndex].mStatus);
 	newRecord->salesTax = stock[stockIndex].sellPrice * newRecord->itemQuantity * 0.066;
 	newRecord->salesTotal = stock[stockIndex].sellPrice * newRecord->itemQuantity + newRecord->salesTax;
 	members[memberIndex].mTotalSales += newRecord->salesTotal;
 	updateMemberStatus(&members[memberIndex]);
+	if (strcmp(storeOldStatus, members[memberIndex].mStatus))
+		printf("\nCongratulations! %s %s Is Now A %s Member!\n", members[memberIndex].mName, members[memberIndex].mID, members[memberIndex].mStatus);
 	obtainDate(newRecord);
 	writeStockFile(stock, &size);
 	wData(members, numberOfRecordsInMemberFile);
@@ -576,10 +579,15 @@ void deleteSearchedRecords(SalesRecord* salesRecords, int numberOfRecordsInFile,
 		for (int j = 0; j < numberOfSearchedRecords; j++) {
 			if (indexOfSearchedRecords[j] == i) {
 				strcpy(singleMember.mID, salesRecords[i].memberId);
+				char storeOldStatus[50];
 				int stockIndex = checkExistedName(salesRecords[i].itemName, stock, &size);
 				int memberIndex = mChkRedundancy(&singleMember);
+				--memberIndex;
+				strcpy(storeOldStatus, members[memberIndex].mStatus);
 				members[memberIndex].mTotalSales -= salesRecords[i].salesTotal;
-				//Add Downgrade of Status
+				updateMemberStatus(&members[memberIndex]);
+				if (strcmp(storeOldStatus, members[memberIndex].mStatus))
+					printf("\nOops! %s %s Is Demoted To A %s Member!\n", members[memberIndex].mName, members[memberIndex].mID, members[memberIndex].mStatus);
 				stock[stockIndex].qtyInStock += salesRecords[i].itemQuantity;
 				skipIndex = 1;
 			}
