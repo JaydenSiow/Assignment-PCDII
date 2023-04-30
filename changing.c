@@ -182,8 +182,6 @@ void deleteMember() {
 			title(action);
 			mDetailedDisplay(&mArray[mPlace - 1], 1);
 			if (confirm(action)) {
-				title(action);
-				mDetailedDisplay(&mArray[mPlace - 1], 1);
 				count = mDelete(mArray, action, count, mPlace);
 
 			}
@@ -718,10 +716,13 @@ int mFind(char action[]) {
 int mDelete(Members* a, char action[], int total, int mPlace) {
 	Members* current;
 	Members* after;
+	Members* deletedMember;
 	char mIDBefore[MAX_CHAR_MEMBER_ID+1];
-
+	
 	//get old member ID
-	strcpy(mIDBefore, a->mID);
+	deletedMember = a + mPlace - 1;
+	strcpy(mIDBefore, deletedMember->mID);
+
 	for (int i = mPlace - 1; i < total; i++) {
 		current = a + i;
 		after = current + 1;
@@ -735,7 +736,7 @@ int mDelete(Members* a, char action[], int total, int mPlace) {
 		strcpy(current->mStatus, after->mStatus);
 		strcpy(current->mUpID, after->mUpID);
 	}
-	updateDownline(a, mIDBefore, mPlace, total-1);
+	updateDownline(a, mIDBefore, total-1);
 	return total - 1;
 }
 int mReport(char action[]) {
@@ -1078,7 +1079,7 @@ void updateSalesMID(Members* a, char mIDBefore[]) {
 	}
 	writeRecordsIntoFile(sales, countOfSales);
 }
-void updateDownline(Members* a, char mIDBefore[], int mLocation, int total) {
+void updateDownline(Members* a, char mIDBefore[], int total) {
 	Members* starting;
 	for (int i = 0; i < total; i++) {
 		starting = a + i;

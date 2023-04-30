@@ -127,7 +127,7 @@ void getMemberUpline(Members* a, int use, char action[], char method[]);
 //update data
 void updateUpline(Members* a, char mIDBefore[], int mLocation, int total);
 void updateSalesMID(Members* a, char mIDBefore[]);
-void updateDownline(Members* a, char mIDBefore[], int mLocation, int total);
+void updateDownline(Members* a, char mIDBefore[], int total);
 
 //clear data
 void clearData(Members* a, int total);
